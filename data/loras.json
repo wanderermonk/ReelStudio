@@ -1,0 +1,11 @@
+[
+  {
+    "id": "pari-lora",
+    "name": "Pari character LoRA (not trained yet)",
+    "trigger": "p4ri",
+    "what": "Will lock Pari's face, hair buns and saree so they stay identical in every clip and every reel. Inactive until you train it and add the two .safetensors file names (see Help \u2192 Characters / README \u2192 Character LoRAs). Until then the trigger word is not added to prompts.",
+    "file_high": "",
+    "file_low": "",
+    "strength": 0.9
+  }
+]

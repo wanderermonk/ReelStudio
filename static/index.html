@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reel Studio</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#FAF7FB; --surface:#FFFFFF; --sunk:#F2ECF4; --line:#E3D9E6;
+  --fg:#22162A; --muted:#6E6175; --accent:#B0246A; --accent-ink:#FFFFFF; --gold:#C98207;
+  --ok:#1D6B4A; --ok-bg:#D9F0E6; --warn-bg:#FBEBD0; --warn:#8A5A05; --bad:#B3261E; --bad-bg:#FBE0DE;
+  --f-display:"Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#17111B; --surface:#211A26; --sunk:#1B1520; --line:#372C3D;
+  --fg:#F2EAF4; --muted:#AE9FB4; --accent:#F0609F; --accent-ink:#1A0E14; --gold:#F2B647;
+  --ok:#8EE0B9; --ok-bg:#183B2D; --warn-bg:#3B2C10; --warn:#F2C977; --bad:#FF8A80; --bad-bg:#3E1C1C;
+  color-scheme:dark;}}
+*{box-sizing:border-box} [hidden]{display:none!important}
+.e-calm{background:var(--sunk);color:var(--muted)} .e-medium{background:var(--warn-bg);color:var(--warn)} .e-high{background:var(--bad-bg);color:var(--bad)}
+#songCanvas{width:100%;height:112px;display:block;border-radius:10px;background:var(--sunk);cursor:pointer;touch-action:none}
+#songCanvas.drag{cursor:grabbing}
+.playing{background:var(--accent)!important;color:var(--accent-ink)!important;border-color:var(--accent)!important}
+.lyr{font-size:13px;color:var(--muted)} .lyr b{color:var(--fg);font-weight:600}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding:28px 16px 64px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:24px}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.15}
+h1{font-size:34px;font-weight:800;letter-spacing:-.02em} h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:19px;display:flex;align-items:center;gap:10px} h3{font-size:15px}
+.step{font:12px var(--f-mono);width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;background:var(--fg);color:var(--bg)}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}
+.lede{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}
+.seg button{border:0;border-radius:999px;padding:8px 14px;font-weight:600;background:transparent}
+.seg button.on{background:var(--fg);color:var(--bg)}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.cast button{position:relative;display:grid;gap:4px;padding:6px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);text-align:left;font-size:13px}
+.cast button img{width:100%;aspect-ratio:9/14;object-fit:cover;border-radius:8px;background:var(--sunk)}
+.cast button.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.cast .ord{position:absolute;top:10px;left:10px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font:700 12px var(--f-mono)}
+.shot{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.shot .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shot .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.shot .beat{display:grid;grid-template-columns:80px 1fr;gap:8px}
+.shot textarea{min-height:58px}
+.kfs{display:flex;gap:12px;flex-wrap:wrap}
+.kf{display:grid;gap:6px;width:150px;font-size:12px}
+.kf img,.kf .ph,.kf video{width:150px;aspect-ratio:9/16;object-fit:cover;border-radius:8px;background:var(--sunk);display:grid;place-items:center;color:var(--muted)}
+.kf .row{gap:4px} .kf button{padding:5px 8px;font-size:12px}
+.voices{display:grid;gap:8px}
+.vrow{display:grid;grid-template-columns:130px 1fr 120px 110px 44px;gap:8px;align-items:center}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.ideas button{text-align:left;border-radius:12px;padding:12px;display:grid;gap:6px;background:var(--surface);font-weight:400;line-height:1.45}
+.ideas button b{font-family:var(--f-display)}
+.roles{display:grid;gap:6px} .roles .r{display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center}
+.line{display:grid;grid-template-columns:140px 1fr 40px;gap:8px}
+.scene{font:700 14px var(--f-display);color:var(--accent);margin-top:6px}
+#sb-shots.compact .det{display:none}
+@media (max-width:700px){.vrow{grid-template-columns:1fr 1fr}.line{grid-template-columns:1fr}}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:13px}
+.steps3{display:flex;gap:6px;flex-wrap:wrap;font-size:13px} .steps3 span{padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line)} .steps3 span.on{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+@media (max-width:700px){.shot .g3,.shot .g2{grid-template-columns:1fr}}
+.credit{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--f-body);padding:7px 11px;border-radius:999px;background:var(--ok-bg);color:var(--ok);cursor:help}
+.credit.low{background:var(--warn-bg);color:var(--warn)} .credit.out{background:var(--bad-bg);color:var(--bad)} .credit.na{background:var(--sunk);color:var(--muted)}
+.filt{display:flex;gap:6px;flex-wrap:wrap} .filt button{padding:6px 12px;font-size:13px} .filt button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.gbar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden} .gbar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.est{font-size:14px} .est.bad{color:var(--bad);font-weight:600}
+.chip{font:600 12px/1 var(--f-body);padding:6px 10px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.cloud{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:#2FA36B;box-shadow:0 0 0 4px color-mix(in srgb,#2FA36B 25%,transparent)}
+.dot.busy{background:#E0A100;box-shadow:0 0 0 4px color-mix(in srgb,#E0A100 25%,transparent);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+button.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+a.link{color:var(--accent);font-weight:600;font-size:13px}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.lib .it{border:1.5px solid var(--line);border-radius:10px;padding:6px;display:grid;gap:4px;background:var(--surface)}
+.lib .it img{width:100%;aspect-ratio:9/13;object-fit:cover;border-radius:6px;background:var(--sunk)}
+.lib .it input{font-size:12px;padding:4px 6px}
+.lib .it.pick{cursor:pointer}.lib .it.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.info{font-size:13px;background:var(--sunk);border-left:3px solid var(--gold);border-radius:6px;padding:8px 10px;margin:0;text-transform:none;letter-spacing:0;font-weight:400;color:var(--fg)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center} .between{justify-content:space-between}
+button{font:600 14px/1 var(--f-body);border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 15px;cursor:pointer}
+button:hover{border-color:var(--fg)} button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.big{padding:14px 22px;font-size:16px}
+button.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 8px}
+label{display:grid;gap:5px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+input,select,textarea{font:15px/1.4 var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;text-transform:none;letter-spacing:0}
+textarea{min-height:90px;resize:vertical}
+.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:760px){.fields{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{border:1.5px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:6px;cursor:pointer;background:var(--surface);text-align:left}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.card img,.ph{width:100%;aspect-ratio:9/13;object-fit:cover;border-radius:8px;background:var(--sunk);display:grid;place-items:center;color:var(--muted);font-size:12px}
+.card .n{font-weight:700}.card .k{font-size:12px;color:var(--muted)}
+.add{border-style:dashed;place-items:center;color:var(--muted);font-weight:600;min-height:200px}
+.sheet{background:var(--sunk);border-radius:12px;padding:16px;display:grid;gap:12px}
+.note{font-size:13px;color:var(--muted);margin:0}
+.guard{font-size:13px;background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:9px 12px;margin:0}
+.clip{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;border:1px solid var(--line);border-radius:12px;padding:12px}
+@media(max-width:600px){.clip{grid-template-columns:1fr}}
+.clip .thumb{width:100%;aspect-ratio:9/16;border-radius:8px;background:var(--sunk);object-fit:cover;display:grid;place-items:center;font-size:12px;color:var(--muted);text-align:center}
+.pill{font:700 11px/1 var(--f-body);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.run{background:var(--warn-bg);color:var(--warn)} .pill.bad{background:var(--bad-bg);color:var(--bad)}
+.opt{display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;font-weight:500;color:var(--fg)}
+.opt input{width:16px;height:16px;accent-color:var(--accent)}
+.log{font:12px/1.5 var(--f-mono);background:var(--sunk);border-radius:8px;padding:10px;max-height:220px;overflow:auto;white-space:pre-wrap}
+.final{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:760px){.final{grid-template-columns:1fr}}
+video{width:100%;border-radius:10px;background:#000}
+#finalVid{aspect-ratio:9/16;object-fit:contain}
+.bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.hist button{width:100%;text-align:left;border-radius:8px;display:flex;justify-content:space-between;gap:10px;font-weight:500}
+.err{color:var(--bad);margin:0;font-size:14px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);max-width:560px;width:calc(100% - 32px);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Reel <em>Studio</em></h1>
+      <p class="lede">Pick a character, choose the reel length and music, and press <b>Make my reel</b>. The app writes the clip prompts, makes every 5-second clip on Comfy Cloud, chains them through each clip's last frame, joins them and adds the music.</p>
+    </div>
+    <div style="display:grid;gap:8px;justify-items:end">
+      <div class="cloud" aria-live="polite">
+        <span class="dot" id="cDot"></span>
+        <span id="cText" style="font-weight:600;font-size:13px">Comfy Cloud: checking…</span>
+        <button id="cConnect" hidden>Connect</button>
+        <button id="cDisconnect" class="danger" hidden>Disconnect</button>
+        <span class="credit na" id="credit" title="Credits">Credits: …</span>
+        <a class="link" id="cOpen" href="https://cloud.comfy.org" target="_blank" rel="noopener">Open Comfy Cloud ↗</a>
+      </div>
+      <div class="row"><div class="chips" id="chips"></div><a href="/help" target="_blank"><button>Help</button></a><button id="openSettings">Settings</button></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="row between"><h2><span class="step">1</span>Character</h2></div>
+    <div class="cards" id="cards"></div>
+    <form class="sheet" id="charForm" hidden>
+      <h3 id="cfTitle">New character</h3>
+      <input type="hidden" id="c-id">
+      <div class="fields">
+        <label>Name<input id="c-name" required maxlength="40"></label>
+        <label>Type<select id="c-kind"><option value="girl-child">Girl (child)</option><option value="boy-child">Boy (child)</option><option value="woman">Woman</option><option value="man">Man</option><option value="animal">Animal</option></select></label>
+        <label>Style<select id="c-style"><option>3D animated cartoon</option><option>Anime</option><option>Claymation</option><option>Stylised semi-realistic</option><option>Photorealistic</option></select></label>
+        <label class="full">Who they are<input id="c-age" maxlength="120" placeholder="a cute 5-year-old Indian girl"></label>
+        <label class="full">Look (face, hair, signature details)<textarea id="c-look" maxlength="400"></textarea></label>
+        <label class="full">Outfit in the start image<input id="c-outfit" maxlength="160" placeholder="a green and pink saree with a gold waistband"></label>
+        <label class="full">Character LoRA (trigger word)
+          <div class="row" style="flex-wrap:nowrap"><select id="c-lora"></select><button type="button" id="manageLoras" style="white-space:nowrap">Manage LoRAs</button></div>
+        </label>
+        <p class="info full" id="c-lorainfo"></p>
+        <div class="full" style="display:grid;gap:8px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Start image — pick from your library or upload a new one</span>
+          <div class="lib" id="c-libpick" style="max-height:330px;overflow:auto"></div>
+          <label>…or upload a new image (it's also added to the library)<input type="file" id="c-image" accept="image/*"></label>
+        </div>
+      </div>
+      <p class="guard" id="childGuard">Child characters stay in a cartoon style, modestly dressed, with playful kid moves only. The app adds these rules to every prompt.</p>
+      <div class="row"><button class="primary" type="submit">Save character</button><button type="button" id="c-cancel">Cancel</button><button type="button" class="ghost" id="c-del" hidden>Delete</button></div>
+    </form>
+  </section>
+
+  <section id="librarySec">
+    <div class="row between"><h2>🖼 Image library</h2><span class="note" id="libCount"></span></div>
+    <p class="note">Start images for your characters and reels. Pari's images are already here. Add your own (PNG, JPG, WEBP), give them a title and tags, and use them as a character's start image or for a single reel. Files you copy into <code>ReelStudio/data/library/</code> appear here automatically.</p>
+    <div class="row">
+      <label class="file" style="display:inline-flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:9px 14px;cursor:pointer">
+        <input type="file" id="libFiles" accept="image/*" multiple style="position:absolute;width:1px;height:1px;opacity:0">+ Add images</label>
+      <input id="libSearch" placeholder="Search title or tags" style="max-width:260px">
+      <button type="button" id="galOpen">✨ Build the character gallery</button>
+    </div>
+    <div class="filt" id="libFilt"></div>
+    <div id="galBox" class="sheet" hidden>
+      <div class="row between"><h3>Character gallery</h3><span class="note" id="galEst"></span></div>
+      <p class="note">80 ready-made original characters (16 girls, 16 boys, 16 women, 16 men, 16 animals) in cartoon, anime, clay and realistic styles, each a full-body front pose that works as a start image. They are made on Comfy Cloud with a fast image model (uses your credits), saved in your library, and only made once. Children are always cartoon-style and modestly dressed.</p>
+      <div class="row" id="galGroups"></div>
+      <div class="row"><button class="primary" type="button" id="galBuild">Make the selected images</button><button type="button" id="galStop" hidden>Stop</button><span class="note" id="galNote"></span></div>
+      <div class="gbar" id="galBarWrap" hidden><i id="galBar"></i></div>
+      <details><summary class="note">Gallery log</summary><div class="log" id="galLog"></div></details>
+    </div>
+    <div class="lib" id="libGrid"></div>
+  </section>
+
+  <section>
+    <div class="row between"><h2><span class="step">2</span><span id="step2Title">Reel</span></h2>
+      <div class="seg" role="tablist" aria-label="What to make">
+        <button type="button" role="tab" id="modeDance" class="on" aria-selected="true">💃 Dance reel</button>
+        <button type="button" role="tab" id="modeStory" aria-selected="false">🎬 Story</button>
+      </div></div>
+    <div id="danceMode" style="display:grid;gap:16px">
+    <div class="fields">
+      <label>Length<select id="r-len"><option value="10">10 s · 2 clips</option><option value="15" selected>15 s · 3 clips</option><option value="20">20 s · 4 clips</option><option value="25">25 s · 5 clips</option><option value="30">30 s · 6 clips</option></select></label>
+      <label class="full" style="grid-column:span 2">Setting<input id="r-setting" placeholder="a warm festive courtyard with marigold garlands"></label>
+      <label class="full">Mood or song notes (helps the dance match)<input id="r-mood" placeholder="happy festive Diwali dance, medium tempo"></label>
+      <label>Music<select id="m-mode"><option value="original">Original dhol track (made for you)</option><option value="song">My song file</option><option value="none">No music (add it in Instagram)</option></select></label>
+      <label id="m-fileWrap" hidden>Song file (MP3, M4A, WAV)<input type="file" id="m-file" accept="audio/*"></label>
+      <label id="m-reuseWrap" hidden>Or a song you used before<select id="m-reuse"><option value="">—</option></select></label>
+      <label id="m-startWrap" hidden>Start song at (seconds)<input type="number" id="m-start" min="0" step="0.5" value="0"></label>
+    </div>
+    <div id="songBox" class="sheet" hidden>
+      <div class="row between"><b id="songTitle">Song</b><span><span class="chip" id="songBpm"></span> <span class="note" id="songWin"></span></span></div>
+      <canvas id="songCanvas" title="Loudness of the song (red = high energy). The pink box is the part your reel uses: drag it, or click anywhere to move it there."></canvas>
+      <div class="row"><button type="button" id="songPlay">▶ Play selected part</button>
+        <button type="button" id="songPrev" title="Move the selection one bar earlier">◀ bar</button><button type="button" id="songNext" title="Move the selection one bar later">bar ▶</button>
+        <button type="button" id="songBest">Use the liveliest part</button>
+        <label class="opt"><input type="checkbox" id="songLoop">Loop</label>
+        <label class="opt"><input type="checkbox" id="m-snap" checked>Start exactly on a beat</label></div>
+      <audio id="songAudio" controls preload="auto" style="width:100%;height:34px"></audio>
+      <label>Lyrics (one line each; a time like [0:12] at the start is optional)<textarea id="songLyrics" rows="5" placeholder="[0:12] first line of the song&#10;[0:16] next line…"></textarea></label>
+      <div class="row"><select id="songLang" style="max-width:180px"><option value="auto">Language: auto</option><option value="hi">Hindi</option><option value="en">English</option><option value="pa">Punjabi</option><option value="mr">Marathi</option><option value="gu">Gujarati</option><option value="bn">Bengali</option><option value="ta">Tamil</option><option value="te">Telugu</option></select>
+        <button type="button" id="songTranscribe">Write the lyrics for me (Whisper)</button><button type="button" id="songSaveLyrics">Save lyrics</button><span class="note" id="songNote"></span></div>
+      <p class="note">The dance plan follows this song: louder parts get bigger moves, and lyric words become gestures (clap → clap, moon/chand → reach up, dil/love → heart hands…).</p>
+    </div>
+    <div class="row">
+      <label class="opt"><input type="checkbox" id="r-turbo" checked>Turbo (about 1–2 min per clip; slightly softer detail)</label>
+      <span class="chip" id="turboChip" title="Turbo uses the lightx2v 4-step LoRA on Comfy Cloud">Turbo: checking…</span>
+      <label class="opt" title="The first 2 steps run without the speed LoRA, so movements come out bigger. About +1 min per clip."><input type="checkbox" id="r-dyn" checked>Dynamic Turbo (bigger moves)</label>
+      <label class="opt" title="Speeds each clip up or down by up to 10% so the dance hits land on the music beats."><input type="checkbox" id="r-sync" checked>Beat sync</label>
+      <label class="opt"><input type="checkbox" id="r-up" checked>Upscale to 1080 × 1920</label>
+    </div>
+    <div class="fields">
+      <label class="full">Start image for this reel<select id="r-start"><option value="">The character's own start image</option></select></label>
+    </div>
+    <div class="row"><button class="primary" id="planBtn">Write the clip prompts</button><span class="note" id="planNote"></span></div>
+    <div id="planBox" class="sheet" hidden>
+      <div class="row between"><h3>Clip plan</h3><span class="note" id="plannerName"></span></div>
+      <div id="planClips" style="display:grid;gap:10px"></div>
+      <p class="est" id="estLine"></p>
+      <div class="row"><button class="primary big" id="makeBtn">Make my reel</button><span class="note">Each clip costs Comfy Cloud credits. You can edit any prompt above first.</span></div>
+    </div>
+    </div>
+    <div id="storyMode" hidden style="display:grid;gap:16px">
+      <p class="note">Make a short story of 4–10 shots (5 seconds each) with cuts, narration, subtitles and sound effects. Every shot does one clear action, and tricky hand moments use a start and an end keyframe so hands and props stay right.</p>
+      <div style="display:grid;gap:8px">
+        <span class="lbl">Who is in the story? <span class="note" style="text-transform:none;letter-spacing:0">Tap in order; the first is the main character (up to 6; 3–4 works best).</span></span>
+        <div class="cast" id="castPick"></div>
+      </div>
+      <div class="row" style="align-items:flex-end">
+        <label style="flex:1;min-width:240px">Story writer<select id="s-writer"><option value="auto">Automatic (best available)</option></select></label>
+        <button type="button" id="s-ideasBtn">💡 Give me 3 ideas</button>
+        <button type="button" id="s-expandBtn">✨ Expand my idea into a full story</button>
+      </div>
+      <div id="s-ideas" class="ideas"></div>
+      <label>Story idea<textarea id="s-idea" rows="4" placeholder="Who wants what, what goes wrong, who helps, how it ends. E.g. Pari's kite gets stuck in a mango tree; Arjun tries to climb, Bholu barks for help, and Dadi's clever idea brings it down — then they fly it together."></textarea></label>
+      <div class="row" id="s-examples"></div>
+      <details id="s-builder" class="sheet" style="padding:12px 16px">
+        <summary><b>Story builder</b> <span class="note">(optional: fill in what you know; ✨ Expand fills the rest)</span></summary>
+        <div style="display:grid;gap:10px;margin-top:10px">
+          <div style="display:grid;gap:6px"><span class="lbl">Roles: who is who</span><div id="s-roles" class="roles"></div></div>
+          <div class="fields">
+            <label>What does the hero want?<input id="b-wish" placeholder="to fly her new kite"></label>
+            <label>What gets in the way?<input id="b-problem" placeholder="it gets stuck in a tall tree"></label>
+            <label>What do they try?<input id="b-attempts" placeholder="jumping, a stick — both fail, funnily"></label>
+            <label>Turning point (who or what helps?)<input id="b-turning_point" placeholder="Dadi ties a ribbon to a broom"></label>
+            <label>Ending<input id="b-ending" placeholder="the kite soars, everyone dances"></label>
+            <label>Message<input id="b-lesson" placeholder="together we can do anything"></label>
+            <label class="full" style="grid-column:1/-1">Fun twist (optional)<input id="b-twist" placeholder="the puppy was holding the string all along"></label>
+          </div>
+          <label>Plot beats in order (one per line)<textarea id="b-beats" rows="6" placeholder="Pari gets a new kite&#10;She runs to fly it&#10;It gets stuck in the mango tree&#10;…"></textarea></label>
+        </div>
+      </details>
+      <div class="fields">
+        <label>Length<select id="s-shots"><option value="4">20 s · 4 shots</option><option value="6" selected>30 s · 6 shots</option><option value="8">40 s · 8 shots</option><option value="10">50 s · 10 shots</option><option value="12">1 min · 12 shots</option><option value="18">1½ min · 18 shots</option><option value="24">2 min · 24 shots</option><option value="30">2½ min · 30 shots</option></select></label>
+        <label>Setting<input id="s-setting" placeholder="a sunny park with flowers"></label>
+        <label>Tone<select id="s-tone"><option>sweet</option><option>funny</option><option>adventure</option><option>emotional</option><option>festive</option><option>magical</option></select></label>
+        <label>Narration<select id="s-lang"><option value="hi">Hindi</option><option value="en" selected>English</option><option value="none">No narration</option></select></label>
+        <label>Music<select id="s-music"><option value="original">Soft original music</option><option value="song">A song I added</option><option value="none">No music</option></select></label>
+        <label id="s-songWrap" hidden>Song<select id="s-song"></select></label>
+      </div>
+      <p class="warn" id="s-long" hidden>Long story: the shots are written scene by scene (best with a Claude API key or Ollama; the built-in writer reuses simple scenes). A 2-minute story is about 24 clips + 30–40 keyframes: roughly 1,100–1,500 credits and 1–1½ hours of cloud time. You can stop at any point and resume later; finished shots are kept.</p>
+      <div style="display:grid;gap:8px"><div class="row between"><span class="lbl">Voices: one per speaker (narrator and each character)</span><label class="opt"><input type="checkbox" id="s-allvoices">Show all voices</label></div><div id="s-voices" class="voices"></div></div>
+      <div class="row">
+        <label class="opt"><input type="checkbox" id="s-turbo" checked>Turbo</label>
+        <label class="opt"><input type="checkbox" id="s-dyn" checked>Dynamic Turbo (bigger moves)</label>
+        <label class="opt"><input type="checkbox" id="s-up" checked>Upscale to 1080 × 1920</label>
+      </div>
+      <div class="row"><button class="primary" id="s-write">Write the story</button><span class="note" id="s-note"></span></div>
+
+      <div id="sbBox" class="sheet" hidden>
+        <div class="row between"><input id="sb-title" style="font:700 18px var(--f-display);max-width:520px" aria-label="Title"><span class="pill" id="sb-pill"></span></div>
+        <p class="note" id="sb-logline"></p>
+        <div class="row"><span class="chip" id="sb-planner"></span><span class="est" id="sb-est"></span><label class="opt" style="margin-left:auto"><input type="checkbox" id="sb-compact">Compact view</label></div>
+        <div class="steps3" id="sb-steps"></div>
+        <div id="sb-shots" style="display:grid;gap:12px"></div>
+        <div class="row" id="sb-addRow"><button type="button" id="sb-add">＋ Add a shot</button></div>
+        <div class="row">
+          <button class="primary" id="sb-kf">1 · Make keyframes</button>
+          <button class="primary" id="sb-video" disabled>2 · Make the video</button>
+          <button id="sb-stop" hidden>Stop after this step</button><button id="sb-cancel" class="danger" hidden>Cancel now (stop credits)</button>
+          <span class="note" id="sb-note"></span>
+        </div>
+        <div class="bar" id="sb-barWrap" hidden><i id="sb-bar"></i></div>
+        <div id="sb-final" class="final" hidden>
+          <video id="sb-vid" controls playsinline></video>
+          <div style="display:grid;gap:12px;align-content:start">
+            <h3>Your short is ready</h3>
+            <p class="note" id="sb-path"></p>
+            <label class="opt" id="sb-subsWrap"><input type="checkbox" id="sb-showsubs">Preview with subtitles</label>
+            <p class="note" id="sb-subsNote">Subtitles are always made, but kept separate: choose the clean video, the copy with subtitles drawn on, or the .srt file (Instagram and YouTube can add it as captions).</p>
+            <div class="row"><a id="sb-dl" download><button class="primary">Download (no subtitles)</button></a><a id="sb-dlsubs" download><button>Download with subtitles</button></a><a id="sb-srt" download><button>Subtitles (.srt)</button></a><button id="sb-reveal">Show in Finder</button></div>
+            <div class="sheet">
+              <h3>Change the voices or music (free, no cloud)</h3>
+              <div class="fields" style="grid-template-columns:1fr 1fr">
+                <label>Speed<select id="x-rate"><option value="-10">Slower</option><option value="0" selected>Normal</option><option value="10">Faster</option></select></label>
+                <label>Music<select id="x-music"><option value="original">Soft original</option><option value="song">A song I added</option><option value="none">No music</option></select></label>
+                <label>Music volume<input type="range" id="x-mvol" min="0" max="0.8" step="0.05" value="0.35"></label>
+                <label>Sound effects volume<input type="range" id="x-fvol" min="0" max="1" step="0.05" value="0.6"></label>
+              </div>
+              <div style="display:grid;gap:6px"><span class="lbl">Voices</span><div id="x-voices" class="voices"></div></div>
+              <div class="row"><button id="x-remix">Re-make the sound</button></div>
+            </div>
+          </div>
+        </div>
+        <details><summary class="note">Activity log</summary><div class="log" id="sb-log"></div></details>
+      </div>
+    </div>
+    <p class="err" id="err" hidden></p>
+  </section>
+
+  <section id="runBox" hidden>
+    <div class="row between"><h2><span class="step">3</span><span id="runTitle">Making the reel</span></h2><span class="pill" id="runPill"></span></div>
+    <div class="bar"><i id="runBar"></i></div>
+    <div id="runClips" style="display:grid;gap:10px"></div>
+    <div id="finalBox" class="final" hidden>
+      <video id="finalVid" controls playsinline></video>
+      <div style="display:grid;gap:12px;align-content:start">
+        <h3>Your reel is ready</h3>
+        <p class="note" id="finalPath"></p>
+        <div class="row"><button class="primary" id="revealBtn">Show in Finder</button><a id="dlLink" download><button>Download</button></a><a id="dlSilent" download><button>Download without music</button></a></div>
+        <div class="sheet">
+          <h3>Change the music</h3>
+          <div class="fields" style="grid-template-columns:1fr 1fr">
+            <label>Music<select id="x-mode"><option value="original">Original dhol track</option><option value="song">My song file</option><option value="none">No music</option></select></label>
+            <label>Start song at (s)<input type="number" id="x-start" min="0" step="0.5" value="0"></label>
+            <label class="full">Song file<input type="file" id="x-file" accept="audio/*"></label>
+          </div>
+          <div class="row"><button id="remixBtn">Remix music</button></div>
+        </div>
+        <p class="note">Before posting: switch on Instagram's <b>AI label</b>, and for popular film songs use Instagram's music library instead of baking them in.</p>
+      </div>
+    </div>
+    <div class="row"><button id="stopBtn">Stop after this clip</button><button id="cancelNow" class="danger">Cancel now (stop credits)</button><button id="resumeBtn" hidden>Resume</button></div>
+    <details><summary class="note">Activity log</summary><div class="log" id="log"></div></details>
+  </section>
+
+  <section>
+    <h2>Past reels</h2>
+    <div class="hist" id="hist" style="display:grid;gap:6px"><p class="note">Nothing yet.</p></div>
+  </section>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" style="display:grid;gap:12px">
+    <h2>Settings</h2>
+    <label>Comfy Cloud API key<input id="s-comfy" placeholder="paste key"></label>
+    <p class="note">Create one at <b>platform.comfy.org/profile/api-keys</b> (needs an active Comfy Cloud plan). Saved only on this Mac, in ReelStudio/config.json.</p>
+    <div class="row"><button type="button" id="s-test">Test key</button><span class="note" id="s-testmsg"></span></div>
+    <label>Claude API key (optional, for better prompts)<input id="s-claude" placeholder="sk-ant-…"></label>
+    <label>Claude model<input id="s-cmodel"></label>
+    <label class="opt"><input type="checkbox" id="s-ollama">Use Ollama on this Mac if no Claude key</label>
+    <label class="opt"><input type="checkbox" id="s-autoopen">Open Comfy Cloud in my browser when the app connects or a reel starts</label>
+    <label>Ollama model<select id="s-omodel"></select></label>
+    <p class="note">With neither, the app uses its built-in dance prompts.</p>
+    <div class="row"><button class="primary" id="s-save" value="save">Save</button><button value="cancel">Close</button></div>
+  </form>
+</dialog>
+
+<dialog id="photoDlg">
+  <form method="dialog" id="photoForm" style="display:grid;gap:12px;max-width:620px">
+    <h2>📷 Make a character from a photo</h2>
+    <p class="note">ReelStudio draws an <b>original illustrated character</b> that looks like the person: same face shape, hair, skin tone and smile, in the style you choose. It is never photorealistic, so it can't be mistaken for a real photo or video of them.</p>
+    <div class="row" style="align-items:flex-start;gap:16px;flex-wrap:nowrap">
+      <div style="display:grid;gap:6px;width:140px;flex:none">
+        <img id="ph-prev" alt="" style="width:140px;aspect-ratio:3/4;object-fit:cover;border-radius:10px;background:var(--sunk)" hidden>
+        <div id="ph-empty" style="width:140px;aspect-ratio:3/4;border-radius:10px;background:var(--sunk);display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:8px">A clear, front-facing photo works best</div>
+      </div>
+      <div class="fields" style="grid-template-columns:1fr 1fr;flex:1">
+        <label class="full" style="grid-column:1/-1">Photo<input type="file" id="ph-file" accept="image/png,image/jpeg,image/webp"></label>
+        <label>Name<input id="ph-name" placeholder="e.g. Anvi"></label>
+        <label>Type<select id="ph-kind"><option value="girl-child">Girl (child)</option><option value="boy-child">Boy (child)</option><option value="woman">Woman</option><option value="man">Man</option></select></label>
+        <label>Style<select id="ph-style"><option>3D animated cartoon</option><option>Anime</option><option>Claymation</option><option>Stylised semi-realistic</option></select></label>
+        <label>Versions to make<select id="ph-var"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select></label>
+        <label style="grid-column:1/-1">Outfit (optional)<input id="ph-outfit" placeholder="e.g. a yellow lehenga with mirror work"></label>
+        <label style="grid-column:1/-1">Anything to keep (optional)<input id="ph-notes" placeholder="e.g. round glasses, curly hair, dimples"></label>
+      </div>
+    </div>
+    <label class="opt guard" style="align-items:flex-start;padding:12px;border-radius:10px"><input type="checkbox" id="ph-consent" style="margin-top:3px">
+      <span><b>I am the person in this photo, or I have their permission</b> to turn it into an AI character. For a child, I am their parent or guardian, or have their parent's or guardian's permission.</span></label>
+    <p class="note">Privacy: the photo is sent to Comfy Cloud only to draw the character, then deleted from ReelStudio. It is never added to your library. Children are always drawn in a cartoon style. Each version uses about 5–9 credits.</p>
+    <div class="row"><button type="button" class="primary" id="ph-go" disabled>Make the character</button><button value="cancel">Close</button><span class="note" id="ph-note"></span></div>
+    <div id="ph-results" class="kfs"></div>
+  </form>
+</dialog>
+
+<dialog id="turboDlg">
+  <form method="dialog" style="display:grid;gap:12px;max-width:440px">
+    <h2>Turbo mode is off</h2>
+    <p>Without Turbo, each 5-second clip takes about <b>8–12 minutes</b> on Comfy Cloud and uses <b>several times more credits</b>.
+       With Turbo it takes about <b>1–2 minutes</b>, with slightly softer detail.</p>
+    <p class="note" id="turboDlgNote"></p>
+    <div class="row"><button class="primary" value="enable">Enable Turbo and start</button>
+      <button value="slow">Keep it off</button><button value="cancel" class="ghost">Cancel</button></div>
+  </form>
+</dialog>
+
+<dialog id="loraDlg">
+  <form method="dialog" style="display:grid;gap:12px">
+    <h2>Character LoRAs</h2>
+    <p class="note">A <b>LoRA</b> is a small add-on model trained on one character. Its <b>trigger word</b> (for example <code>p4ri</code>) is put at the start of every prompt to switch the LoRA's look on. A trigger word does nothing without its LoRA files, so add the file names exactly as they appear in Comfy Cloud → Models → <b>My Models</b> (Creator plan or higher).</p>
+    <div id="loraList" style="display:grid;gap:8px"></div>
+    <div class="sheet">
+      <h3 id="lfTitle">Add a LoRA</h3>
+      <input type="hidden" id="l-id">
+      <label>Name<input id="l-name" placeholder="Pari character LoRA"></label>
+      <label>Trigger word<input id="l-trigger" placeholder="p4ri"></label>
+      <label>What it does<textarea id="l-what" placeholder="Keeps Pari's face, hair buns and saree identical in every clip."></textarea></label>
+      <label>High-noise file<input id="l-high" placeholder="pari_wan22_high_noise.safetensors"></label>
+      <label>Low-noise file<input id="l-low" placeholder="pari_wan22_low_noise.safetensors"></label>
+      <label>Strength (0.6–1.0 usual)<input type="number" id="l-strength" min="0" max="2" step="0.05" value="0.9"></label>
+      <div class="row"><button type="button" class="primary" id="l-save">Save LoRA</button><button type="button" id="l-new">New</button></div>
+      <p class="err" id="l-err" hidden></p>
+    </div>
+    <div class="row"><button value="close">Close</button></div>
+  </form>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api=async(url,opt={})=>{const r=await fetch(url,opt);const t=await r.text();let j;try{j=JSON.parse(t)}catch{j={error:t}}if(!r.ok){const er=new Error(j.error||j.message||("HTTP "+r.status));er.data=j;throw er;}return j;};
+const post=(u,b)=>api(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b||{})});
+let chars=[],sel=null,plan=null,cur=null,timer=null;
+const KIND={"girl-child":"Girl · child","boy-child":"Boy · child",woman:"Woman",man:"Man",animal:"Animal"};
+function showErr(e){$("err").textContent=e.message||e;$("err").hidden=false;}
+// ---------- Turbo check ----------
+function turboChip(t){const c=$("turboChip");if(!c)return;
+  if(!t.available){c.textContent="Turbo: unavailable";c.style.background="#fde2e2";c.style.color="#222";c.title=t.problems.join("\n");return;}
+  c.textContent=t.enabled?"Turbo: ON":"Turbo: OFF";c.style.background=t.enabled?"#dff5e3":"#fff1cc";c.style.color="#222";c.title=t.message;}
+async function loadTurbo(){try{const t=await api("/api/turbo");$("r-turbo").checked=t.default;$("r-dyn").disabled=!t.default;turboChip(t);}catch{}}
+$("r-turbo").onchange=async()=>{try{turboChip(await post("/api/turbo",{enabled:$("r-turbo").checked}))}catch(e){showErr(e)}};
+function askTurbo(t){return new Promise(res=>{const d=$("turboDlg");
+  $("turboDlgNote").textContent=t&&!t.available?("Note: "+t.problems.join(" ")):"";
+  d.returnValue="";d.onclose=()=>res(d.returnValue||"cancel");d.showModal();});}
+// Start (or resume) a reel, but stop and ask first if Turbo is off.
+async function startReel(pid,body){
+  try{return await post(`/api/projects/${pid}/start`,body||{});}
+  catch(e){if(!(e.data&&e.data.turbo_off))throw e;
+    const a=await askTurbo(e.data.turbo);
+    if(a==="enable"){const t=await post("/api/turbo",{enabled:true,project:pid});$("r-turbo").checked=true;turboChip(t);
+      return await post(`/api/projects/${pid}/start`,body||{});}
+    if(a==="slow")return await post(`/api/projects/${pid}/start`,{...(body||{}),allow_slow:true});
+    throw new Error("Not started. Turbo is still off.");}}
+loadTurbo();
+
+// ---------- character from a photo ----------
+let phTimer=null;
+function openPhoto(){$("photoForm").reset();$("ph-prev").hidden=true;$("ph-empty").hidden=false;$("ph-results").innerHTML="";$("ph-note").textContent="";phCheck();
+  $("photoDlg").showModal();api("/api/characters/from-photo/status").then(j=>{if(j.state==="running")phWatch();}).catch(()=>{});}
+function phCheck(){const kid=$("ph-kind").value.endsWith("child");
+  [...$("ph-style").options].forEach(o=>{if(o.value==="Stylised semi-realistic")o.disabled=kid});if(kid&&$("ph-style").value==="Stylised semi-realistic")$("ph-style").value="3D animated cartoon";
+  $("ph-go").disabled=!($("ph-consent").checked&&$("ph-file").files[0]);}
+["ph-consent","ph-kind","ph-style"].forEach(id=>$(id).addEventListener("change",phCheck));
+$("ph-file").onchange=()=>{const f=$("ph-file").files[0];if(f){$("ph-prev").src=URL.createObjectURL(f);$("ph-prev").hidden=false;$("ph-empty").hidden=true;}phCheck();};
+$("ph-go").onclick=async()=>{if(!$("ph-consent").checked)return;const fd=new FormData();
+  fd.append("photo",$("ph-file").files[0]);fd.append("consent","yes");
+  for(const[k,id]of[["name","ph-name"],["kind","ph-kind"],["style","ph-style"],["outfit","ph-outfit"],["notes","ph-notes"],["variations","ph-var"]])fd.append(k,$(id).value);
+  $("ph-go").disabled=true;$("ph-results").innerHTML="";
+  try{await api("/api/characters/from-photo",{method:"POST",body:fd});phWatch();}catch(e){$("ph-note").textContent=e.message;$("ph-go").disabled=false;}};
+function phWatch(){clearInterval(phTimer);phTick();phTimer=setInterval(phTick,2500);}
+async function phTick(){let j;try{j=await api("/api/characters/from-photo/status")}catch{return}
+  $("ph-note").innerHTML=j.state==="running"?`<span class="spin"></span> Drawing ${Math.min(j.done+1,j.total)} of ${j.total}…`:j.state==="error"?esc(j.error||"Stopped."):j.state==="done"?"Pick the one you like:":"";
+  $("ph-results").innerHTML=(j.results||[]).map(i=>`<div class="kf"><img src="/api/library/${i.id}/image" alt=""><button type="button" class="primary" data-usephoto="${i.id}">Use this one</button></div>`).join("");
+  if(j.state!=="running"){clearInterval(phTimer);phCheck();loadLib();loadCredits&&loadCredits(true);}}
+$("ph-results").onclick=async e=>{const b=e.target.closest("[data-usephoto]");if(!b)return;await loadLib();const i=lib.find(x=>x.id===b.dataset.usephoto);
+  $("photoDlg").close();openForm(null);$("c-name").value=i?.name||$("ph-name").value||"";$("c-kind").value=i?.kind||$("ph-kind").value;
+  $("c-style").value=i?.style||$("ph-style").value;$("c-outfit").value=i?.outfit||"";$("c-look").value=i?.look||"";pickLib=b.dataset.usephoto;renderLibPick();guard();
+  $("charForm").scrollIntoView({behavior:"smooth"});};
+
+// ---------- credits ----------
+let creditInfo=null;
+const num=n=>Math.round(n).toLocaleString();
+async function loadCredits(refresh){try{creditInfo=await api("/api/credits"+(refresh?"?refresh=1":""))}catch{return}
+  const b=creditInfo.balance||{},a=creditInfo.app||{},el=$("credit");
+  if(b.available){el.textContent=`💳 ${num(b.credits)} credits left`;el.className="credit"+(b.credits<150?" out":b.credits<600?" low":"");
+    el.title=`About $${b.usd.toFixed(2)} (${num(b.subscription)} from your plan + ${num(b.prepaid)} top-up)\n`+
+      (b.month_spend_credits!=null?`Spent this month (Comfy Cloud): ${num(b.month_spend_credits)} credits\n`:"")+
+      `Used by this app this month: ~${num(a.month_credits)} credits (${a.month_clips} clips, ${a.month_images} images)\nClick to refresh.`;}
+  else{el.className="credit na";el.textContent=`💳 ~${num(a.month_credits||0)} credits used this month`;
+    el.title=`Comfy Cloud did not return your balance (${b.error||"unknown"}). This is the app's own estimate.\nSee the exact balance on Comfy Cloud: profile menu → Manage plan → Credit history.`;}
+  updateEstimate();}
+$("credit").onclick=()=>loadCredits(true);
+async function updateEstimate(){if(!$("estLine")||$("planBox").hidden)return;
+  const n=plan?.clips?.length||Math.round((+$("r-len").value)/5);
+  try{const e=await api(`/api/credits/estimate?clips=${n}&turbo=${$("r-turbo").checked?1:0}&dynamic=${$("r-dyn").checked?1:0}`);
+    const bal=creditInfo?.balance?.available?creditInfo.balance.credits:null;
+    $("estLine").className="est"+(bal!=null&&bal<e.credits?" bad":"");
+    $("estLine").textContent=`This reel: about ${num(e.credits)} credits (~$${e.usd.toFixed(2)}, about ${e.minutes} min of cloud time, ${e.per_clip} per clip).`+
+      (bal!=null?(bal<e.credits?` You have only ${num(bal)} — top up first.`:` You have ${num(bal)}.`):"");}catch{}}
+["r-turbo","r-dyn","r-len"].forEach(id=>$(id).addEventListener("change",updateEstimate));
+loadCredits();setInterval(loadCredits,60000);
+
+// ---------- gallery ----------
+let galInfo=null,galTimer=null;
+async function loadGallery(){galInfo=await api("/api/gallery/presets");
+  $("galGroups").innerHTML=galInfo.groups.map(g=>`<label class="opt"><input type="checkbox" data-gk="${g.kind}" ${g.have<g.total?"checked":""} ${g.have>=g.total?"disabled":""}>${g.label} (${g.have}/${g.total} made)</label>`).join("");galEst();}
+function galEst(){if(!galInfo)return;const kinds=[...document.querySelectorAll("[data-gk]:checked")].map(x=>x.dataset.gk);
+  const n=galInfo.presets.filter(p=>kinds.includes(p.kind)&&!p.have).length;$("galBuild").disabled=!n;
+  $("galEst").textContent=n?`${n} images · about ${num(n*galInfo.credits_per_image)} credits`:"All selected images are made";}
+$("galGroups").onchange=galEst;
+$("galOpen").onclick=()=>{$("galBox").hidden=!$("galBox").hidden;if(!$("galBox").hidden){loadGallery();galWatch();}};
+$("galBuild").onclick=async()=>{const kinds=[...document.querySelectorAll("[data-gk]:checked")].map(x=>x.dataset.gk);
+  try{await post("/api/gallery/build",{kinds});galWatch();}catch(e){showErr(e)}};
+$("galStop").onclick=()=>post("/api/gallery/stop");
+api("/api/gallery/status").then(j=>{if(j.state==="running"){$("galBox").hidden=false;loadGallery();galWatch();}}).catch(()=>{});
+function galWatch(){clearInterval(galTimer);galTick();galTimer=setInterval(galTick,3000);}
+async function galTick(){let j;try{j=await api("/api/gallery/status")}catch{return}
+  const run=j.state==="running";$("galStop").hidden=!run;$("galBuild").hidden=run;$("galBarWrap").hidden=!j.total;
+  $("galBar").style.width=(j.total?Math.round(j.done/j.total*100):0)+"%";$("galLog").textContent=(j.log||[]).join("\n");
+  $("galNote").innerHTML=run?`<span class="spin"></span> ${j.done}/${j.total} · ${esc(j.current)}${j.engine?" · "+esc(j.engine):""}`:
+    j.state==="done"?`Done: ${j.done-j.errors.length} images added (~${num(j.credits)} credits).`:j.state==="idle"?"":esc(`${j.state}: ${(j.errors||[]).slice(-1)[0]||""}`);
+  if(run&&j.done!==galTick.last){galTick.last=j.done;loadLib();}
+  if(!run){clearInterval(galTimer);if(j.state!=="idle"){loadLib();loadGallery();loadCredits(true);}}}
+
+
+async function refreshStatus(){
+  const s=await api("/api/status");
+  $("chips").innerHTML=`<span class="chip ${s.comfy?"ok":"bad"}">${s.comfy?"Comfy Cloud key set":"No Comfy Cloud key"}</span>`+
+   `<span class="chip ${s.claude||s.ollama.length?"ok":""}">Prompts: ${s.claude?"Claude":s.ollama.length?"Ollama":"built-in"}</span>`;
+}
+async function loadChars(){chars=await api("/api/characters"); if(!sel&&chars[0])sel=chars[0].id; renderCards();}
+function renderCards(){
+  $("cards").innerHTML=chars.map(c=>`<div class="card ${c.id===sel?"sel":""}" data-id="${c.id}">
+     ${c.image?`<img src="/api/characters/${c.id}/image?${Date.now()%1e6}" alt="">`:`<div class="ph">No image</div>`}
+     <span class="n">${esc(c.name)}</span><span class="k">${esc(KIND[c.kind]||"")}</span>
+     <button class="ghost" data-edit="${c.id}">Edit</button></div>`).join("")+`<button class="card add" id="addC">+ Add character</button><button class="card add" id="photoC">📷 Make a character from a photo</button>`;
+}
+$("cards").onclick=e=>{const ed=e.target.closest("[data-edit]");if(ed){openForm(chars.find(c=>c.id===ed.dataset.edit));return;}
+  if(e.target.closest("#addC")){openForm(null);return;}
+  if(e.target.closest("#photoC")){openPhoto();return;} const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;renderCards();}};
+function openForm(c){$("charForm").hidden=false;$("cfTitle").textContent=c?`Edit ${c.name}`:"New character";
+  $("c-id").value=c?.id||"";$("c-name").value=c?.name||"";$("c-kind").value=c?.kind||"girl-child";$("c-style").value=c?.style||"3D animated cartoon";
+  $("c-age").value=c?.age||"";$("c-look").value=c?.look||"";$("c-outfit").value=c?.outfit||"";$("c-image").value="";
+  pickLib=c?.library_id||"";renderLoraSelect(c?.lora_id||"none");renderLibPick();
+  $("c-del").hidden=!c;guard();}
+function guard(){const child=$("c-kind").value.endsWith("child");$("childGuard").hidden=!child;
+  [...$("c-style").options].forEach(o=>{if(o.value==="Photorealistic")o.disabled=child});if(child&&$("c-style").value==="Photorealistic")$("c-style").value="3D animated cartoon";}
+$("c-kind").onchange=guard;$("c-cancel").onclick=()=>$("charForm").hidden=true;
+$("charForm").onsubmit=async e=>{e.preventDefault();const fd=new FormData();
+  [["id","c-id"],["name","c-name"],["kind","c-kind"],["style","c-style"],["age","c-age"],["look","c-look"],["outfit","c-outfit"],["lora_id","c-lora"]].forEach(([k,i])=>fd.append(k,$(i).value));
+  if($("c-image").files[0])fd.append("image",$("c-image").files[0]); else if(pickLib)fd.append("library_id",pickLib);
+  try{const c=await api("/api/characters",{method:"POST",body:fd});sel=c.id;$("charForm").hidden=true;loadChars();}catch(err){showErr(err)}};
+$("c-del").onclick=async()=>{if($("c-del").dataset.armed!=="1"){$("c-del").dataset.armed="1";$("c-del").textContent="Click again to delete";return;}
+  await api("/api/characters/"+$("c-id").value,{method:"DELETE"});$("c-del").dataset.armed="";$("c-del").textContent="Delete";$("charForm").hidden=true;sel=null;loadChars();};
+
+$("m-mode").onchange=()=>{const s=$("m-mode").value==="song";$("m-fileWrap").hidden=!s;$("m-startWrap").hidden=!s;
+  $("m-reuseWrap").hidden=!s||$("m-reuse").options.length<2;$("songBox").hidden=!s||!song;if(s)loadSongs();};
+// ---------- song: beats, energy, lyrics ----------
+let song=null,songPoll=null;
+const fmt=t=>{t=Math.max(0,+t||0);return Math.floor(t/60)+":"+String((t%60).toFixed(1)).padStart(4,"0")};
+async function loadSongs(){try{const l=await api("/api/songs");const keep=$("m-reuse").value;
+  $("m-reuse").innerHTML='<option value="">—</option>'+l.map(x=>`<option value="${x.id}">${esc(x.name)} · ${Math.round(x.bpm||0)} BPM${x.has_lyrics?" · lyrics":""}</option>`).join("");
+  $("m-reuse").value=keep;$("m-reuseWrap").hidden=$("m-mode").value!=="song"||!l.length;}catch{}}
+function snapClient(t){if(!song||!$("m-snap").checked)return t;const d=song.downbeats||[];if(!d.length)return t;
+  return d.reduce((a,b)=>Math.abs(b-t)<Math.abs(a-t)?b:a,d[0]);}
+function setSong(v,useBest){if(typeof stopPart==="function"&&preview)stopPart();song=v;$("songBox").hidden=$("m-mode").value!=="song";
+  $("songTitle").textContent=v.name;$("songBpm").textContent=Math.round(v.bpm)+" BPM · "+fmt(v.duration);
+  $("songAudio").src=`/api/songs/${v.id}/file`;$("songLyrics").value=v.lyrics_text||"";
+  if(useBest&&v.best_start!=null)$("m-start").value=v.best_start;
+  $("songNote").textContent=v.lyrics&&v.lyrics.length?`${v.lyrics.length} lyric lines saved.`:"No lyrics yet: paste them, or let Whisper write them.";
+  drawSong();}
+function drawSong(){if(!song)return;const c=$("songCanvas"),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;
+  c.width=r.width*dpr;c.height=r.height*dpr;const g=c.getContext("2d");g.scale(dpr,dpr);const W=r.width,H=r.height,D=song.duration||1,X=t=>t/D*W;
+  const css=getComputedStyle(document.documentElement),col=n=>css.getPropertyValue(n).trim();
+  const top=18,bot=H-2;g.clearRect(0,0,W,H);
+  // time ruler
+  const stepT=D>240?30:D>90?15:D>40?10:5;g.font="11px system-ui";g.textBaseline="top";
+  for(let t=0;t<=D;t+=stepT){g.globalAlpha=.5;g.fillStyle=col("--muted");g.fillRect(X(t),top-4,1,4);if(X(t)<W-28)g.fillText(fmt(t).replace(/\.\d$/,""),X(t)+2,2);}
+  // energy bars
+  const e=song.energy,step=song.energy_step||.5,bw=Math.max(1,W/e.length);
+  e.forEach((v,i)=>{g.fillStyle=v>=.62?col("--bad"):v>=.33?col("--gold"):col("--muted");g.globalAlpha=.75;
+    const h=Math.max(2,v*(bot-top-4));g.fillRect(X(i*step),bot-h,Math.max(1,bw-0.5),h);});
+  g.globalAlpha=.3;g.fillStyle=col("--fg");(song.downbeats||[]).forEach(t=>g.fillRect(X(t),top,1,4));
+  // selected part
+  const st=+$("m-start").value||0,len=+$("r-len").value;
+  g.globalAlpha=.16;g.fillStyle=col("--accent");g.fillRect(X(st),top,X(len),bot-top);
+  g.globalAlpha=1;g.strokeStyle=col("--accent");g.lineWidth=2;g.strokeRect(X(st),top,Math.max(4,X(len)),bot-top);
+  g.fillStyle=col("--accent");g.font="600 11px system-ui";const lab=`${fmt(st)} – ${fmt(st+len)}`,lw=g.measureText(lab).width+10;
+  const lx=Math.min(Math.max(0,X(st)),W-lw);g.fillRect(lx,top+2,lw,16);g.fillStyle=col("--accent-ink");g.fillText(lab,lx+5,top+4);
+  // playhead
+  const a=$("songAudio");if(a.src&&(!a.paused||a.currentTime>0)){g.fillStyle=col("--fg");g.globalAlpha=.9;g.fillRect(X(a.currentTime)-1,top,2,bot-top);
+    g.beginPath();g.moveTo(X(a.currentTime)-5,top);g.lineTo(X(a.currentTime)+5,top);g.lineTo(X(a.currentTime),top+6);g.fill();}
+  g.globalAlpha=1;$("songWin").textContent=`reel uses ${fmt(st)}–${fmt(st+len)}`;}
+// ----- hearing the selected part -----
+let preview=false,raf=0;
+function setStart(t,keepPlaying){const len=+$("r-len").value;t=Math.max(0,Math.min((song.duration||len)-len,t));
+  $("m-start").value=(+snapClient(t)).toFixed(2);drawSong();if(preview&&keepPlaying!==false)playPart();}
+function playPart(){if(!song)return;const a=$("songAudio");preview=true;a.currentTime=+$("m-start").value||0;a.play().catch(e=>showErr(e));
+  $("songPlay").textContent="■ Stop";$("songPlay").classList.add("playing");loop();}
+function stopPart(){preview=false;$("songAudio").pause();$("songPlay").textContent="▶ Play selected part";$("songPlay").classList.remove("playing");drawSong();}
+function loop(){cancelAnimationFrame(raf);const a=$("songAudio");
+  if(preview){const end=(+$("m-start").value||0)+(+$("r-len").value);if(a.currentTime>=end){if($("songLoop").checked){a.currentTime=+$("m-start").value||0;}else{stopPart();return;}}}
+  drawSong();if(!a.paused)raf=requestAnimationFrame(loop);}
+$("songPlay").onclick=()=>preview?stopPart():playPart();
+$("songAudio").addEventListener("play",loop);$("songAudio").addEventListener("seeked",drawSong);
+$("songAudio").addEventListener("pause",()=>{if(preview&&!$("songAudio").ended){preview=false;$("songPlay").textContent="▶ Play selected part";$("songPlay").classList.remove("playing");}drawSong();});
+function barNudge(dir){if(!song)return;const st=+$("m-start").value||0,d=song.downbeats||[];
+  let t=dir>0?d.find(x=>x>st+0.05):[...d].reverse().find(x=>x<st-0.05);if(t==null)t=st+dir*(240/(song.bpm||120));setStart(t);}
+$("songPrev").onclick=()=>barNudge(-1);$("songNext").onclick=()=>barNudge(1);
+async function uploadSong(file){const fd=new FormData();fd.append("song",file);$("songNote").innerHTML='<span class="spin"></span> Listening for the beat…';$("songBox").hidden=false;
+  try{setSong(await api("/api/songs?seconds="+$("r-len").value,{method:"POST",body:fd}),true);loadSongs();}catch(e){showErr(e);$("songNote").textContent="";}}
+$("m-file").onchange=()=>{if($("m-file").files[0])uploadSong($("m-file").files[0]);};
+$("m-reuse").onchange=async()=>{if(!$("m-reuse").value)return;setSong(await api(`/api/songs/${$("m-reuse").value}?seconds=${$("r-len").value}`),false);};
+$("m-start").oninput=drawSong;$("r-len").addEventListener("change",drawSong);window.addEventListener("resize",drawSong);
+$("m-start").onchange=()=>setStart(+$("m-start").value);
+let dragOff=null;
+function canvasTime(ev){const r=$("songCanvas").getBoundingClientRect();return Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))*(song.duration||1);}
+$("songCanvas").onpointerdown=ev=>{if(!song)return;const t=canvasTime(ev),st=+$("m-start").value||0,len=+$("r-len").value;
+  if(t>=st&&t<=st+len){dragOff=t-st;$("songCanvas").classList.add("drag");$("songCanvas").setPointerCapture(ev.pointerId);}
+  else{setStart(t-len/2);}};
+$("songCanvas").onpointermove=ev=>{if(dragOff==null)return;const len=+$("r-len").value;
+  const t=Math.max(0,Math.min(song.duration-len,canvasTime(ev)-dragOff));$("m-start").value=t.toFixed(2);drawSong();};
+$("songCanvas").onpointerup=ev=>{if(dragOff==null)return;dragOff=null;$("songCanvas").classList.remove("drag");setStart(+$("m-start").value);};
+$("songBest").onclick=async()=>{if(!song)return;const v=await api(`/api/songs/${song.id}?seconds=${$("r-len").value}`);
+  $("m-start").value=v.best_start;drawSong();$("songCanvas").scrollIntoView({behavior:"smooth",block:"center"});playPart();};
+async function saveLyrics(){if(!song)return;const r=await post(`/api/songs/${song.id}/lyrics`,{text:$("songLyrics").value,start:+$("m-start").value||0,length:+$("r-len").value});
+  song.lyrics_text=$("songLyrics").value;song.lyrics=r.lyrics;$("songNote").textContent=`${r.lines} lyric lines saved.`;}
+$("songSaveLyrics").onclick=()=>saveLyrics().catch(showErr);
+$("songTranscribe").onclick=async()=>{if(!song)return;$("songTranscribe").disabled=true;
+  try{let st=await post(`/api/songs/${song.id}/transcribe`,{language:$("songLang").value});
+    $("songNote").innerHTML='<span class="spin"></span> '+esc(st.msg);clearInterval(songPoll);
+    songPoll=setInterval(async()=>{const v=await api(`/api/songs/${song.id}`);const t=v.transcribe||{};
+      $("songNote").innerHTML=(t.state==="running"?'<span class="spin"></span> ':"")+esc(t.msg||"");
+      if(t.state!=="running"){clearInterval(songPoll);$("songTranscribe").disabled=false;if(t.state==="done"){song.lyrics=v.lyrics;song.lyrics_text=v.lyrics_text;$("songLyrics").value=v.lyrics_text;loadSongs();}}},2000);}
+  catch(e){showErr(e);$("songTranscribe").disabled=false;}};
+$("r-turbo").addEventListener("change",()=>{$("r-dyn").disabled=!$("r-turbo").checked;});
+$("planBtn").onclick=async()=>{$("err").hidden=true;if(!sel)return showErr("Pick or add a character first.");
+  $("planBtn").disabled=true;$("planNote").innerHTML='<span class="spin"></span> Writing prompts…';
+  try{const mm=$("m-mode").value;
+    if(mm==="song"&&!song)throw new Error("Choose a song file first (or pick another music option).");
+    if(mm==="song"&&$("songLyrics").value!==(song.lyrics_text||""))await saveLyrics();
+    plan=await post("/api/plan",{character_id:sel,seconds:+$("r-len").value,setting:$("r-setting").value,mood:$("r-mood").value,
+      music:{mode:mm},song_id:song&&mm==="song"?song.id:null,song_start:+$("m-start").value||0,snap:$("m-snap").checked});
+    if(mm==="song"&&plan.song_start!=null){$("m-start").value=plan.song_start;drawSong();}
+    $("plannerName").textContent="Written by "+plan.planner;renderPlan();$("planBox").hidden=false;updateEstimate();$("planNote").textContent="";}
+  catch(e){showErr(e);$("planNote").textContent="";} $("planBtn").disabled=false;};
+function renderPlan(){$("planClips").innerHTML=plan.clips.map((c,i)=>`<div class="sheet" style="background:var(--surface);border:1px solid var(--line)">
+   <div class="row between"><b>Clip ${i+1} · ${i*5}–${i*5+5} s</b><span class="note">${i===0||c.reanchor?"starts from the character image":"starts from the end of clip "+i}${c.lock_end?" · ends on the character image":""}</span></div>
+   ${c.energy?`<div class="row lyr"><span class="chip e-${c.energy}">${c.energy} energy</span>${(c.lyrics||[]).length?`<span>♪ <b>${esc(c.lyrics.join(" / ").slice(0,90))}</b></span>`:""}${(c.gestures||[]).length?`<span>→ ${esc(c.gestures.join(", "))}</span>`:""}</div>`:""}
+   <textarea data-i="${i}">${esc(c.motion)}</textarea>
+   <div class="row">${i>0?`<label class="opt"><input type="checkbox" data-f="reanchor" data-i="${i}" ${c.reanchor?"checked":""}>Restart from character image</label>`:""}
+   <label class="opt"><input type="checkbox" data-f="lock_end" data-i="${i}" ${c.lock_end?"checked":""}>End on character image</label></div></div>`).join("");}
+$("planClips").oninput=e=>{const t=e.target;if(t.tagName==="TEXTAREA")plan.clips[+t.dataset.i].motion=t.value;
+  if(t.dataset.f){plan.clips[+t.dataset.i][t.dataset.f]=t.checked;renderPlan();}};
+$("makeBtn").onclick=async()=>{$("err").hidden=true;$("makeBtn").disabled=true;
+  try{const mode=$("m-mode").value;
+    let p=await post("/api/projects",{character_id:sel,start_library_id:$("r-start").value||null,clips:plan.clips,setting:$("r-setting").value,mood:$("r-mood").value,
+      turbo:$("r-turbo").checked,dynamic:$("r-dyn").checked,beat_sync:$("r-sync").checked,upscale:$("r-up").checked,
+      music:{mode,start:+$("m-start").value||0,snap:$("m-snap").checked,song_id:mode==="song"&&song?song.id:null}});
+    if(mode==="song"&&!song){if(!$("m-file").files[0])throw new Error("Choose a song file, or pick another music option.");
+      const fd=new FormData();fd.append("song",$("m-file").files[0]);p=await api(`/api/projects/${p.id}/song`,{method:"POST",body:fd});
+      await post(`/api/projects/${p.id}/music`,{start:+$("m-start").value||0});}
+    await startReel(p.id,{});watch(p.id);}
+  catch(e){showErr(e)} $("makeBtn").disabled=false;};
+
+function watch(id){cur=id;$("runBox").hidden=false;$("runBox").scrollIntoView({behavior:"smooth"});clearInterval(timer);tick();timer=setInterval(tick,3000);}
+async function tick(){if(!cur)return;let p;try{p=await api("/api/projects/"+cur)}catch{return}
+  const n=p.clips.length,done=p.clips.filter(c=>c.state==="done").length;
+  $("runTitle").textContent=p.title;$("runBar").style.width=(p.status==="done"?100:Math.round(done/n*90))+"%";
+  $("runPill").textContent=p.status==="done"?"Done":p.status==="error"?"Stopped":p.status==="running"?`Clip ${Math.min(done+1,n)} of ${n}`:"Ready";
+  $("runPill").className="pill "+(p.status==="done"?"ok":p.status==="error"?"bad":"run");
+  $("runClips").innerHTML=p.clips.map((c,i)=>{const st=c.state||"waiting";
+    const lab={waiting:"Waiting",uploading:"Uploading",generating:`On Comfy Cloud · ${c.cloud_status||""} · ${c.elapsed||0}s`,done:`Done · ${c.seconds||5}s`}[st]||st;
+    return `<div class="clip">${c.video?`<video src="/api/projects/${cur}/file/${c.video}?v=${c.job||""}" poster="/api/projects/${cur}/file/${c.thumb}?v=${c.job||""}" preload="metadata" muted loop playsinline onmouseover="this.play()" onmouseout="this.pause()" class="thumb"></video>`:`<div class="thumb">${st==="generating"?'<span class="spin"></span>':"Clip "+(i+1)}</div>`}
+      <div style="display:grid;gap:6px;align-content:start"><div class="row between"><b>Clip ${i+1}</b><span class="pill ${st==="done"?"ok":st==="waiting"?"":"run"}">${esc(lab)}</span></div>
+      <p class="note">${esc(c.motion).slice(0,240)}…</p>
+      ${p.status!=="running"&&c.video?`<div class="row"><button data-redo="${i}">Redo from this clip</button><button class="ghost" data-tolib="${c.last_frame}">Save last frame to library</button></div>`:""}</div></div>`}).join("");
+  $("log").textContent=(p.log||[]).join("\n");$("log").scrollTop=1e9;
+  $("stopBtn").hidden=p.status!=="running";$("cancelNow").hidden=p.status!=="running";$("resumeBtn").hidden=p.status!=="error";
+  if(p.status==="error")showErr(p.error||"Stopped.");
+  if(p.status==="done"&&p.final){$("finalBox").hidden=false;const v=`/api/projects/${cur}/file/${p.final}?t=${p.log.length}`;
+    if($("finalVid").dataset.src!==v){$("finalVid").poster=`/api/projects/${cur}/file/${p.clips[0].thumb}`;$("finalVid").src=v;$("finalVid").dataset.src=v;}
+    $("dlLink").href=v;$("dlSilent").href=`/api/projects/${cur}/file/${p.silent}`;$("finalPath").textContent="Saved in ReelStudio/"+(p.output_copy||"output");}
+  else $("finalBox").hidden=true;
+  if(p.status!=="running"){clearInterval(timer);loadHist();}}
+$("runClips").onclick=async e=>{const t=e.target.closest("[data-tolib]");if(t){await post("/api/library/from-project",{project:cur,file:t.dataset.tolib});t.textContent="Saved to library";loadLib();return;}
+  const b=e.target.closest("[data-redo]");if(!b)return;
+  try{await startReel(cur,{from_clip:+b.dataset.redo});watch(cur);}catch(err){showErr(err)}};
+$("stopBtn").onclick=()=>post(`/api/projects/${cur}/stop`);
+$("cancelNow").onclick=async()=>{const r=await post(`/api/projects/${cur}/stop`,{now:true});$("cancelNow").textContent="Cancelling…";setTimeout(()=>$("cancelNow").textContent="Cancel now (stop credits)",4000);tick();};
+$("resumeBtn").onclick=async()=>{const p=await api("/api/projects/"+cur);const i=p.clips.findIndex(c=>c.state!=="done");
+  try{await startReel(cur,{from_clip:Math.max(0,i)});$("err").hidden=true;watch(cur);}catch(e){showErr(e)}};
+$("revealBtn").onclick=()=>post(`/api/projects/${cur}/reveal`);
+$("remixBtn").onclick=async()=>{try{const mode=$("x-mode").value;
+  if(mode==="song"){if(!$("x-file").files[0])throw new Error("Choose a song file.");const fd=new FormData();fd.append("song",$("x-file").files[0]);
+    await api(`/api/projects/${cur}/song`,{method:"POST",body:fd});}
+  await post(`/api/projects/${cur}/music`,{mode,start:+$("x-start").value||0});await post(`/api/projects/${cur}/remix`);watch(cur);}catch(e){showErr(e)}};
+
+async function loadHist(){const h=await api("/api/projects");
+  $("hist").innerHTML=h.length?h.map(p=>`<button data-p="${p.id}" data-type="${p.type||"dance"}"><span>${p.type==="story"?"🎬 ":"💃 "}${esc(p.title)}</span><span class="note">${esc(p.status)} · ${new Date(p.created*1000).toLocaleString()}</span></button>`).join(""):`<p class="note">Nothing yet.</p>`;}
+$("hist").onclick=e=>{const b=e.target.closest("[data-p]");if(!b)return;$("err").hidden=true;
+  if(b.dataset.type==="story"&&window.openStory){window.openStory(b.dataset.p);return;}
+  if($("danceMode").hidden)$("modeDance").click();watch(b.dataset.p);};
+
+$("openSettings").onclick=async()=>{const s=await api("/api/settings");$("s-comfy").value=s.comfy_api_key;$("s-claude").value=s.anthropic_api_key;
+  $("s-cmodel").value=s.anthropic_model;$("s-ollama").checked=s.use_ollama;$("s-autoopen").checked=s.auto_open_cloud;
+  $("s-omodel").innerHTML=`<option value="">(first installed)</option>`+s.ollama_models.map(m=>`<option ${m===s.ollama_model?"selected":""}>${esc(m)}</option>`).join("");
+  $("s-testmsg").textContent="";$("settings").showModal();};
+$("s-save").onclick=async()=>{await post("/api/settings",{comfy_api_key:$("s-comfy").value,anthropic_api_key:$("s-claude").value,
+  anthropic_model:$("s-cmodel").value,use_ollama:$("s-ollama").checked,auto_open_cloud:$("s-autoopen").checked,ollama_model:$("s-omodel").value});refreshStatus();};
+$("s-test").onclick=async()=>{await post("/api/settings",{comfy_api_key:$("s-comfy").value});$("s-testmsg").textContent="Testing…";
+  const r=await post("/api/settings/test");$("s-testmsg").textContent=r.message;refreshStatus();};
+
+/* ---------- image library ---------- */
+let lib=[],pickLib="",loras=[];
+async function loadLib(){lib=await api("/api/library");renderLib();renderLibPick();
+  const v=$("r-start").value;$("r-start").innerHTML=`<option value="">The character's own start image</option>`+lib.map(i=>`<option value="${i.id}">${esc(i.title)}</option>`).join("");$("r-start").value=v;}
+const FILTERS=[["all","All"],["girl-child","Girls"],["boy-child","Boys"],["woman","Women"],["man","Men"],["animal","Animals"],["mine","My images"]];let libFilter="all";
+function renderFilt(){$("libFilt").innerHTML=FILTERS.map(([k,l])=>{const n=k==="all"?lib.length:k==="mine"?lib.filter(i=>!i.preset).length:lib.filter(i=>i.kind===k).length;
+  return `<button type="button" data-f="${k}" class="${libFilter===k?"on":""}">${l} · ${n}</button>`}).join("");}
+$("libFilt").onclick=e=>{const b=e.target.closest("[data-f]");if(!b)return;libFilter=b.dataset.f;renderLib();};
+function renderLib(){const q=($("libSearch").value||"").toLowerCase();renderFilt();
+  const items=lib.filter(i=>(libFilter==="all"||(libFilter==="mine"?!i.preset:i.kind===libFilter))&&(!q||(i.title+" "+i.tags+" "+(i.look||"")).toLowerCase().includes(q)));
+  $("libCount").textContent=`${lib.length} image${lib.length===1?"":"s"}`;
+  $("libGrid").innerHTML=items.length?items.map(i=>`<div class="it"><img src="/api/library/${i.id}/image" alt="" loading="lazy">
+    <input data-lt="${i.id}" value="${esc(i.title)}" aria-label="Title"><input data-lg="${i.id}" value="${esc(i.tags)}" placeholder="tags" aria-label="Tags">
+    ${i.preset?`<button type="button" data-mkchar="${i.id}" title="${esc((i.look||"")+(i.outfit?", wearing "+i.outfit:""))}">Make a character</button>`:""}
+    <button class="ghost" data-ldel="${i.id}">Delete</button></div>`).join(""):`<p class="note">No images match.</p>`;}
+function renderLibPick(){if(!$("c-libpick"))return;$("c-libpick").innerHTML=lib.map(i=>`<div class="it pick ${i.id===pickLib?"sel":""}" data-pick="${i.id}" title="${esc(i.title)}"><img src="/api/library/${i.id}/image" alt="" loading="lazy"><span class="note" style="font-size:11px">${esc(i.title)}</span></div>`).join("")||`<p class="note">The library is empty. Upload an image below.</p>`;}
+$("c-libpick").onclick=e=>{const d=e.target.closest("[data-pick]");if(!d)return;pickLib=d.dataset.pick;$("c-image").value="";renderLibPick();};
+$("libSearch").oninput=renderLib;
+$("libFiles").onchange=async e=>{const fd=new FormData();[...e.target.files].forEach(f=>fd.append("images",f));
+  const r=await api("/api/library",{method:"POST",body:fd});if(r.errors.length)showErr(r.errors.join("; "));e.target.value="";loadLib();};
+$("libGrid").addEventListener("change",async e=>{const t=e.target;if(t.dataset.lt)await api("/api/library/"+t.dataset.lt,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:t.value})});
+  if(t.dataset.lg)await api("/api/library/"+t.dataset.lg,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:t.value})});loadLib();});
+$("libGrid").onclick=async e=>{const m=e.target.closest("[data-mkchar]");
+  if(m){const i=lib.find(x=>x.id===m.dataset.mkchar);openForm(null);$("c-name").value=i.name||"";$("c-kind").value=i.kind||"girl-child";
+    $("c-style").value=i.style||"3D animated cartoon";$("c-look").value=i.look||"";$("c-outfit").value=i.outfit||"";pickLib=i.id;renderLibPick();guard();
+    $("charForm").scrollIntoView({behavior:"smooth"});return;}
+  const b=e.target.closest("[data-ldel]");if(!b)return;if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="Click again";return;}
+  await api("/api/library/"+b.dataset.ldel,{method:"DELETE"});loadLib();};
+
+/* ---------- LoRAs ---------- */
+async function loadLoras(){loras=await api("/api/loras");}
+function renderLoraSelect(selId){$("c-lora").innerHTML=loras.filter(l=>!l.info_only).map(l=>`<option value="${l.id}">${esc(l.name)}${l.trigger?` — trigger: ${esc(l.trigger)}`:""}</option>`).join("");
+  $("c-lora").value=loras.some(l=>l.id===selId)?selId:"none";loraInfo();}
+function loraInfo(){const l=loras.find(x=>x.id===$("c-lora").value)||loras[0];const t=loras.find(x=>x.id==="lightning");
+  $("c-lorainfo").innerHTML=`<b>${esc(l.name)}</b>${l.trigger?` · trigger word <code>${esc(l.trigger)}</code>`:""}: ${esc(l.what||"")}`+
+   (l.file_high||l.file_low?`<br>Files: <code>${esc(l.file_high||"")}</code> / <code>${esc(l.file_low||"")}</code> · strength ${l.strength??0.9}`:"")+
+   `<br><span class="note">Also built in: <b>${esc(t.name)}</b>: ${esc(t.what)}</span>`;}
+$("c-lora").onchange=loraInfo;
+function renderLoraList(){$("loraList").innerHTML=loras.map(l=>`<div class="info"><div class="row between"><b>${esc(l.name)}${l.trigger?` · <code>${esc(l.trigger)}</code>`:""}</b>
+   ${l.builtin?'<span class="note">built in</span>':`<span><button type="button" class="ghost" data-ledit="${l.id}">Edit</button><button type="button" class="ghost" data-ldelete="${l.id}">Delete</button></span>`}</div>${esc(l.what||"")}</div>`).join("");}
+$("manageLoras").onclick=()=>{renderLoraList();loraForm(null);$("loraDlg").showModal();};
+function loraForm(l){$("lfTitle").textContent=l?"Edit "+l.name:"Add a LoRA";$("l-id").value=l?.id||"";$("l-name").value=l?.name||"";$("l-trigger").value=l?.trigger||"";
+  $("l-what").value=l?.what||"";$("l-high").value=l?.file_high||"";$("l-low").value=l?.file_low||"";$("l-strength").value=l?.strength??0.9;$("l-err").hidden=true;}
+$("l-new").onclick=()=>loraForm(null);
+$("loraList").onclick=async e=>{const ed=e.target.closest("[data-ledit]");if(ed){loraForm(loras.find(l=>l.id===ed.dataset.ledit));return;}
+  const d=e.target.closest("[data-ldelete]");if(d){await api("/api/loras/"+d.dataset.ldelete,{method:"DELETE"});await loadLoras();renderLoraList();renderLoraSelect($("c-lora").value);}};
+$("l-save").onclick=async()=>{try{const r=await post("/api/loras",{id:$("l-id").value||undefined,name:$("l-name").value,trigger:$("l-trigger").value,what:$("l-what").value,
+   file_high:$("l-high").value,file_low:$("l-low").value,strength:+$("l-strength").value});await loadLoras();renderLoraList();renderLoraSelect(r.id);loraForm(null);}
+  catch(e){$("l-err").textContent=e.message;$("l-err").hidden=false;}};
+
+let cloudN=0;
+async function cloudTick(){let c;try{c=await api("/api/cloud"+(cloudN++%4===0?"?queue=1":""))}catch{return}
+  const busy=c.connected&&c.active_jobs>0;
+  $("cDot").className="dot"+(busy?" busy":c.connected&&c.key?" on":"");
+  let t=!c.key?"Comfy Cloud: no API key":!c.connected?"Comfy Cloud: disconnected (no credits used)":busy?`Comfy Cloud: connected · ${c.active_jobs} job${c.active_jobs>1?"s":""} running`:"Comfy Cloud: connected · idle (no credits used)";
+  if(c.queue&&!busy&&(c.queue.running||c.queue.pending))t+=` · ${c.queue.running+c.queue.pending} job(s) in your cloud queue`;
+  $("cText").textContent=t;$("cOpen").href=c.dashboard;
+  $("cConnect").hidden=c.connected||!c.key;$("cDisconnect").hidden=!c.connected||!c.key;
+  $("makeBtn").disabled=!c.connected;}
+$("cConnect").onclick=async()=>{$("cConnect").disabled=true;try{const r=await post("/api/cloud/connect");$("err").hidden=true;}catch(e){showErr(e)}$("cConnect").disabled=false;cloudTick();};
+$("cDisconnect").onclick=async()=>{if($("cDisconnect").dataset.armed!=="1"){$("cDisconnect").dataset.armed="1";$("cDisconnect").textContent="Click again to disconnect";
+    setTimeout(()=>{$("cDisconnect").dataset.armed="";$("cDisconnect").textContent="Disconnect"},4000);return;}
+  $("cDisconnect").dataset.armed="";$("cDisconnect").textContent="Disconnect";
+  const r=await post("/api/cloud/disconnect");$("err").textContent=r.message;$("err").hidden=false;cloudTick();if(cur)tick();};
+setInterval(cloudTick,5000);cloudTick();
+loadLoras().then(()=>renderLoraSelect("none"));loadLib();
+refreshStatus();loadChars();loadHist();
+</script>
+<script src="/static/story.js"></script>
+</body>
+</html>

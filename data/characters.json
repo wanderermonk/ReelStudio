@@ -1,0 +1,120 @@
+[
+  {
+    "id": "pari",
+    "name": "Pari",
+    "kind": "girl-child",
+    "style": "3D animated cartoon",
+    "age": "a cute 5-year-old Indian girl",
+    "look": "round chubby face, big sparkling brown eyes, warm brown skin, dark hair in two little buns with red flowers, tiny red bindi, small gold jewellery, gap-toothed smile",
+    "outfit": "a green and pink saree with a gold waistband",
+    "lora_trigger": "",
+    "image": "pari.png"
+  },
+  {
+    "id": "2a0c8c1b",
+    "name": "Bhuvan",
+    "kind": "boy-child",
+    "age": "A 7 year old cute boy",
+    "style": "Stylised semi-realistic",
+    "look": "Round face, golden hair, very fair, clue eyes, distinct cut out nose",
+    "outfit": "A green coloured Kurta and dhoti",
+    "lora_trigger": "",
+    "image": "2a0c8c1b.avif"
+  },
+  {
+    "id": "2b8205c1",
+    "name": "Arjun",
+    "kind": "boy-child",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "a 6-year-old boy with a small turban and a wide smile",
+    "outfit": "a bright orange bhangra kurta and lungi",
+    "lora_id": "none",
+    "image": "2b8205c1.jpg",
+    "library_id": "e22396a1"
+  },
+  {
+    "id": "bbd30a82",
+    "name": "Kaalu",
+    "kind": "animal",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "a playful black Labrador puppy standing upright",
+    "outfit": "a blue collar with a bell",
+    "lora_id": "none",
+    "image": "bbd30a82.jpg",
+    "library_id": "c8b9dc9b"
+  },
+  {
+    "id": "ac22a47a",
+    "name": "Eva",
+    "kind": "girl-child",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "Curly mid length hair",
+    "outfit": "A purple Saree with White Blouse",
+    "lora_id": "none",
+    "image": "ac22a47a.png",
+    "library_id": "90ef28d6"
+  },
+  {
+    "id": "d1ddc6e6",
+    "name": "Eva_Small",
+    "kind": "girl-child",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "",
+    "outfit": "",
+    "lora_id": "none",
+    "image": "d1ddc6e6.png",
+    "library_id": "577e7909"
+  },
+  {
+    "id": "f140f7cb",
+    "name": "Rimi",
+    "kind": "woman",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "Squarish glasses with straight mid length Hair",
+    "outfit": "Pink Tshirt",
+    "lora_id": "none",
+    "image": "f140f7cb.png",
+    "library_id": "311f2228"
+  },
+  {
+    "id": "b376749b",
+    "name": "Fighter",
+    "kind": "man",
+    "age": "",
+    "style": "Stylised semi-realistic",
+    "look": "",
+    "outfit": "keep the tie",
+    "lora_id": "none",
+    "image": "b376749b.png",
+    "library_id": "7c22f791"
+  },
+  {
+    "id": "300050c5",
+    "name": "rimi",
+    "kind": "woman",
+    "age": "",
+    "style": "Stylised semi-realistic",
+    "look": "Squarish Glasses",
+    "outfit": "Pink T-shirt",
+    "lora_id": "none",
+    "image": "300050c5.png",
+    "library_id": "80cc9e78"
+  },
+  {
+    "id": "fee6b7bf",
+    "name": "Eva_Real",
+    "kind": "woman",
+    "age": "",
+    "style": "Stylised semi-realistic",
+    "look": "Mid Length Curly Hairs",
+    "outfit": "Pink Saree with Off White Blouse",
+    "lora_id": "none",
+    "image": "fee6b7bf.png",
+    "library_id": "1adcb2fb"
+  }
+]

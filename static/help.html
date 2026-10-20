@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reel Studio Help</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#FAF7FB;--surface:#FFFFFF;--sunk:#F2ECF4;--line:#E3D9E6;--fg:#22162A;--muted:#6E6175;--accent:#B0246A;--ok:#1D6B4A;--ok-bg:#D9F0E6;--warn-bg:#FBEBD0;--warn:#8A5A05}
+@media (prefers-color-scheme: dark){:root{--bg:#17111B;--surface:#211A26;--sunk:#1B1520;--line:#372C3D;--fg:#F2EAF4;--muted:#AE9FB4;--accent:#F0609F;--ok:#8EE0B9;--ok-bg:#183B2D;--warn-bg:#3B2C10;--warn:#F2C977;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:28px 16px 80px}
+.wrap{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}nav{position:static!important}}
+nav{position:sticky;top:16px;align-self:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:4px;font-size:14px}
+nav a{color:var(--fg);text-decoration:none;padding:4px 8px;border-radius:6px}nav a:hover{background:var(--sunk)}
+nav b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px 2px}
+main{display:grid;gap:22px;min-width:0}
+h1{font:800 32px/1.1 "Avenir Next",system-ui,sans-serif;margin:0}h1 em{font-style:normal;color:var(--accent)}
+h2{font:700 21px/1.2 "Avenir Next",system-ui,sans-serif;margin:0 0 6px}
+h3{font-size:16px;margin:14px 0 4px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+p{margin:6px 0;max-width:72ch} li{margin:3px 0}
+code,kbd{font:13px ui-monospace,Menlo,monospace;background:var(--sunk);border-radius:5px;padding:1px 5px}
+pre{background:var(--sunk);border-radius:8px;padding:12px;overflow-x:auto;font:13px/1.5 ui-monospace,Menlo,monospace}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.tip{background:var(--ok-bg);color:var(--ok);border-radius:8px;padding:10px 12px;margin:10px 0}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;margin:10px 0}
+details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer;font-weight:600}
+a{color:var(--accent)}
+.back{display:inline-block;margin-top:6px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav aria-label="Help topics">
+  <b>Start here</b>
+  <a href="#quick">Quick start</a>
+  <a href="#comfy">Create your Comfy Cloud account</a>
+  <a href="#key">Get your API key</a>
+  <a href="#connect">Connect / Disconnect & credits</a>
+  <b>Making reels</b>
+  <a href="#characters">Characters</a>
+  <a href="#photo">Character from a photo</a>
+  <a href="#library">Image library &amp; gallery</a>
+  <a href="#credits">Credits counter</a>
+  <a href="#lora">LoRAs & trigger words</a>
+  <a href="#reel">Plan and make a reel</a>
+  <a href="#chain">How clips are chained</a>
+  <a href="#music">Music</a>
+  <a href="#dance">Dance to the music</a>
+  <a href="#story">Story mode</a>
+  <a href="#fix">Fix a clip / change music</a>
+  <b>More</b>
+  <a href="#prompts">Better prompts (Claude / Ollama)</a>
+  <a href="#files">Where files are saved</a>
+  <a href="#trouble">Troubleshooting</a>
+  <a href="#faq">FAQ</a>
+  <a href="/">← Back to the app</a>
+</nav>
+
+<main>
+  <div><h1>Reel Studio <em>Help</em></h1><a class="back" href="/">← Back to the app</a></div>
+
+  <section id="quick">
+    <h2>Quick start</h2>
+    <ol>
+      <li>Start the app: open Terminal, <code>cd ~/Documents/Projects_Folder/ReelStudio</code>, then <code>./run.sh</code>. Your browser opens at <code>http://127.0.0.1:7860</code>.</li>
+      <li>Create a Comfy Cloud account and plan (see <a href="#comfy">below</a>), then an API key.</li>
+      <li>Click <b>Settings</b>, paste the key, click <b>Test key</b>, then <b>Save</b>.</li>
+      <li>Click <b>Connect</b> in the Comfy Cloud bar at the top. The light turns green.</li>
+      <li>Pick a character, choose the length and music, click <b>Write the clip prompts</b>, then <b>Make my reel</b>.</li>
+      <li>When it's done, click <b>Show in Finder</b>. Your reel is in <code>ReelStudio/output/</code>.</li>
+      <li>Click <b>Disconnect</b> when you're finished for the day.</li>
+    </ol>
+    <p>To stop the app itself, press <kbd>Ctrl</kbd>+<kbd>C</kbd> in the Terminal window.</p>
+  </section>
+
+  <section id="comfy">
+    <h2>Create your Comfy Cloud account</h2>
+    <p>Comfy Cloud runs the Wan 2.2 video model on powerful GPUs, so your Mac doesn't have to.</p>
+    <ol>
+      <li>Go to <a href="https://comfy.org/cloud" target="_blank" rel="noopener">comfy.org/cloud</a> and click <b>Sign up</b> (or <a href="https://cloud.comfy.org" target="_blank" rel="noopener">cloud.comfy.org</a>).</li>
+      <li>Sign in with <b>Google</b>, <b>GitHub</b> or email. New accounts get a few free runs to try it.</li>
+      <li>Choose a plan at <a href="https://comfy.org/cloud/pricing" target="_blank" rel="noopener">comfy.org/cloud/pricing</a>. You need a <b>paid plan</b> to use the API that this app relies on.
+        <table>
+          <tr><th>Plan</th><th>Good for</th></tr>
+          <tr><td>Standard</td><td>Trying the app and a few reels a month</td></tr>
+          <tr><td>Creator</td><td>Regular reels, and importing your own models / character LoRAs</td></tr>
+          <tr><td>Pro</td><td>Heavy daily use and longer jobs</td></tr>
+        </table>
+        Prices and credits change, so check the pricing page. Monthly plan credits don't roll over; top-up credits last longer.</li>
+      <li>Enter your payment details on Comfy's own site. Reel Studio never sees them.</li>
+      <li>Optional: open the <b>Wan 2.2 14B image to video</b> template on the website once and run it, to check your account works.</li>
+    </ol>
+  </section>
+
+  <section id="key">
+    <h2>Get your API key</h2>
+    <ol>
+      <li>Go to <a href="https://platform.comfy.org/profile/api-keys" target="_blank" rel="noopener">platform.comfy.org → Profile → API keys</a>, signed in with the same account.</li>
+      <li>Click <b>Create API key</b>, give it a name like <i>Reel Studio Mac</i>, and copy the key. It's shown only once.</li>
+      <li>In the app: <b>Settings → Comfy Cloud API key</b> → paste → <b>Test key</b> → <b>Save</b>.</li>
+    </ol>
+    <div class="warn">Treat the key like a password. It's stored only in <code>ReelStudio/config.json</code> on this Mac and is never uploaded to GitHub (<code>.gitignore</code> excludes it). If it leaks, delete it on platform.comfy.org and create a new one.</div>
+  </section>
+
+  <section id="connect">
+    <h2>Connect / Disconnect and saving credits</h2>
+    <p>The bar at the top right shows the live connection:</p>
+    <table>
+      <tr><th>Light</th><th>Meaning</th></tr>
+      <tr><td>🟢 Connected · idle</td><td>Ready. <b>No credits are being used</b>; Comfy Cloud only charges while a GPU is working on a job.</td></tr>
+      <tr><td>🟡 Connected · jobs running</td><td>A clip is being made on Comfy Cloud. <b>Credits are being used.</b></td></tr>
+      <tr><td>⚪ Disconnected</td><td>The app won't send anything to Comfy Cloud.</td></tr>
+    </table>
+    <h3>Connect</h3>
+    <p>Checks your key, turns the light green and opens <b>Comfy Cloud</b> in your browser so you can watch jobs and credits there. The website also opens automatically when a reel starts (at most every 10 minutes). Turn this off in <b>Settings</b>.</p>
+    <h3>Disconnect</h3>
+    <p>Click it twice to confirm. It immediately:</p>
+    <ul><li>cancels every Reel Studio job running or waiting on Comfy Cloud,</li><li>interrupts the current GPU job,</li><li>stops all reels in progress, and</li><li>blocks new jobs until you click <b>Connect</b> again.</li></ul>
+    <p>Clips that already finished are kept. Later you can press <b>Resume</b> on the reel to continue from where it stopped.</p>
+    <h3>Stop buttons on a reel</h3>
+    <ul><li><b>Stop after this clip</b>: lets the current clip finish (no wasted credits), then stops.</li>
+        <li><b>Cancel now (stop credits)</b>: cancels the current cloud job right away.</li></ul>
+    <div class="tip">There is no Comfy "server" you rent and must switch off. Comfy Cloud is pay-per-use, so when nothing is running, nothing is charged. Disconnect is your emergency brake and a guarantee that nothing new starts.</div>
+  </section>
+
+  <section id="characters">
+    <h2>Characters</h2>
+    <p>Click <b>+ Add character</b> or <b>Edit</b>. The start image matters most:</p>
+    <ul>
+      <li>one character, <b>full body</b>, facing the camera, <b>vertical</b> (9:16 or close);</li>
+      <li>the <b>background you want in the reel</b>; a plain backdrop gives plain clips;</li>
+      <li>the same outfit you describe in "Outfit in the start image".</li>
+    </ul>
+    <p>For child characters, the app always keeps a cartoon style, modest clothing and playful kid-style moves.</p>
+    <p><b>Character LoRA</b>: pick one from the dropdown to lock the character's look. See <a href="#lora">LoRAs & trigger words</a>.</p>
+  </section>
+
+  <section id="photo">
+    <h2>Make a character from a photo</h2>
+    <ol>
+      <li>In step 1, click <b>📷 Make a character from a photo</b>.</li>
+      <li>Choose a clear, front-facing photo, then a name, type, style, optional outfit and details to keep (glasses, curly hair, dimples…), and how many versions to make (1–3).</li>
+      <li>Tick the box to confirm <b>you are the person in the photo or have their permission</b>. For a child, you must be their parent or guardian, or have their permission. The button only works once the box is ticked.</li>
+      <li>Press <b>Make the character</b>, wait about a minute per version, then <b>Use this one</b>. The character form opens already filled in. Check it and Save.</li>
+    </ol>
+    <ul>
+      <li>The result is always an <b>illustrated</b> character (3D cartoon, anime, claymation or stylised semi-realistic), never photorealistic. Children are always cartoon-style and modestly dressed.</li>
+      <li>The photo is sent to Comfy Cloud only to draw the character, then deleted from ReelStudio. It is never stored in your library. The drawn versions are saved in the library under "My images", with the date consent was confirmed.</li>
+      <li>This needs an image-edit model on your Comfy Cloud account (Qwen-Image-Edit or FLUX Kontext). Each version uses about 5–9 credits.</li>
+      <li>Please don't use photos of strangers, celebrities or anyone who hasn't agreed.</li>
+    </ul>
+  </section>
+
+  <section id="library">
+    <h2>Image library</h2>
+    <p>The library holds every start image you can use. Pari's images are already in it.</p>
+    <ul>
+      <li><b>Add images</b>: click <b>+ Add images</b> in the Image library section (you can pick several PNG/JPG/WEBP files at once), or copy files into <code>ReelStudio/data/library/</code>; they appear automatically.</li>
+      <li><b>Title and tags</b>: type in the boxes under each picture; they save when you click away. Use the search box to filter.</li>
+      <li><b>Use as a character's start image</b>: Edit the character → click a picture under "Start image".</li>
+      <li><b>Use for one reel only</b>: in step 2, choose it under <b>Start image for this reel</b>. The character keeps its usual image.</li>
+      <li><b>Save a frame from a reel</b>: under a finished clip, click <b>Save last frame to library</b>. This is handy for a new pose.</li>
+      <li><b>Delete</b>: click Delete twice. Characters that already use the image keep their own copy.</li>
+      <li><b>Filter</b>: the buttons All · Girls · Boys · Women · Men · Animals · My images show one group at a time.</li>
+    </ul>
+    <h3>Character gallery (80 ready-made characters)</h3>
+    <ol>
+      <li>Click <b>✨ Build the character gallery</b> (Comfy Cloud must be connected).</li>
+      <li>Tick the groups you want: 16 girls, 16 boys, 16 women, 16 men and 16 animals, all invented characters in cartoon, anime, clay, semi-realistic and realistic styles. Children are always cartoon-style and modestly dressed.</li>
+      <li>The panel shows how many images and about how many credits it will cost (roughly 5–7 credits per image). Press <b>Make the selected images</b>. Each image takes about 15–40 seconds. Stop any time; images already made stay.</li>
+      <li>Each image is made only once. Press the button again later and it only makes the missing ones.</li>
+      <li>Under any gallery picture, <b>Make a character</b> opens the character form already filled in (name, type, style, look, outfit, start image). Change anything, then Save.</li>
+    </ol>
+    <p class="note">The app uses the first image model it finds on your Comfy Cloud account: Z-Image Turbo, then Qwen-Image (Lightning), Qwen-Image, then SDXL. To use a different model, open a text-to-image workflow on Comfy Cloud, choose File → Export (API), and save the file as <code>ReelStudio/workflows/t2i_api.json</code>. The app will then use it.</p>
+  </section>
+
+  <section id="story">
+    <h2>Story mode (short films)</h2>
+    <p>At the top of step 2, switch from <b>💃 Dance reel</b> to <b>🎬 Story</b>.</p>
+    <ol>
+      <li><b>Pick the cast.</b> Tap characters in order (up to 6; 3–4 works best). The first one is the main character. A puppy or kitten you made from the gallery can be a character too.</li>
+      <li><b>Write the idea</b> (or tap an example), then choose the length (20 s up to 2½ minutes), setting, tone, narration language (Hindi, English or none) and music. Press <b>Write the story</b>.</li>
+      <li><b>Story writer.</b> Choose who writes the story: <i>Automatic</i>, <i>Claude</i> (with an API key), any <b>Ollama model installed on your Mac</b> (each one is listed; start the Ollama app first), or the built-in templates. Larger models (7B and up, e.g. llama3.1:8b, qwen2.5:7b, gemma2:9b) write better stories. Local models can take a minute or two, and progress is shown as they work.</li>
+      <li><b>💡 Give me 3 ideas</b> suggests three story ideas that use your whole cast. Tap one to use it.</li>
+      <li><b>✨ Expand my idea into a full story</b> turns a one-line idea into a complete plan: roles for every character, what the hero wants, the problem, the attempts, the turning point, the ending, the message and 6–10 plot beats. It all lands in the <b>Story builder</b>, where you can edit any of it. Anything you typed there first is kept.</li>
+      <li><b>Writing a good idea yourself</b>: <i>WHO</i> (hero) + <i>WANTS</i> (a clear wish) + <i>BUT</i> (a problem) + <i>SO</i> (an attempt that fails, ideally funny) + <i>THEN</i> (a friend or clever idea helps) + <i>FINALLY</i> (a warm ending). Give every character a role and one trait (brave hero, clumsy best friend, wise grandma, cheeky puppy). Keep it visual: big actions, simple props, two or three places. Example: "Pari's new kite gets stuck in Dadi's mango tree. Arjun tries to climb and slips, Bholu barks for help, and Dadi ties a ribbon to a broom to free it. They fly it together at sunset."</li>
+      <li><b>Voices: one per speaker.</b> Under <i>Voices</i> there is a row for the 🎙 Narrator and one for every character. Each row has its own voice, pitch (Much lower … Much higher) and speed. Tick <b>Show all voices</b> for 50+ more voices (needs internet once). The <i>Multilingual</i> voices (Ava, Emma, Andrew, Brian) can speak Hindi too, which gives Hindi stories more than two different voices. Press ▶ to hear it. Sensible voices are picked for you: a higher voice for children, a male or female voice for adults, and a very high voice for animals.</li>
+      <li><b>Check the shot list.</b> Every shot is a card you can edit:
+        <ul>
+          <li><b>How it's made</b>. <i>New shot from a start keyframe</i> is a normal cut. <i>Start + end keyframes</i> is best whenever hands touch something (picking up, giving, hugging, catching). <i>Continue previous shot</i> carries on with no cut.</li>
+          <li><b>What happens, second by second</b>: 0–2 s, 2–4 s, 4–5 s, one simple movement each.</li>
+          <li><b>Eyes look at…</b> and <b>Hands do…</b>: say which hand, which object and where it is. The eyes should look at an object before the hand reaches it.</li>
+          <li><b>Props</b>: big and simple (ball, balloon, kite, flower, gift box, puppy). Yellow warnings appear for things AI video handles badly (pens, phones, spoons, laces, keys…) and for shots with too many actions.</li>
+          <li><b>Spoken lines</b>: up to 3 per shot. Choose who says each line (Narrator or a character) and keep each line short (about 12 words). Lines in one shot are spoken one after another. If they're longer than the shot, it is slowed a little or held so the words fit. <b>Sound effect</b>: press ▶ to hear it.</li>
+        </ul></li>
+      <li><b>1 · Make keyframes.</b> The app draws the first picture of each shot (and the last picture for start+end shots) on Comfy Cloud, using your characters' images so faces and outfits stay the same. For each keyframe: <b>Redo</b>, <b>Upload</b> your own picture, or <b>Approve</b>. Keyframes are cheap; fix them before making video.</li>
+      <li><b>2 · Make the video.</b> One 5-second video per shot, then the app joins them with cuts, adds the voice, sound effects and soft music (the music dips under the voice). If a narration line is longer than its shot, the shot is slowed a little or held so the words fit.</li>
+      <li><b>Long stories (1–2½ minutes).</b> The story is planned as scenes first, then each scene's shots are written with the story so far in mind. This works best with a Claude API key or Ollama; the built-in writer reuses simple scenes. A 2-minute story is about 24 clips and 30–40 keyframes: roughly 1,100–1,500 credits and 1–1½ hours of cloud time. Tick <b>Compact view</b> to hide the detail fields, and use Stop or Resume whenever you like, because finished shots are kept.</li>
+      <li><b>Finished.</b> You get the clean video, a copy with subtitles drawn on, and a <code>.srt</code> subtitle file. Tick <b>Preview with subtitles</b> to compare, then download the one you want. <b>Change the voices or music</b> lets you change any speaker's voice or pitch and re-makes the sound for free (no cloud).</li>
+    </ol>
+    <p class="note">Voices: Microsoft Edge neural voices (installed automatically the first time; they need internet), including Hindi (Swara, Madhur) and child-like English voices (Ana, Maisie). Without internet, the Mac's own voices are used. Your own sound effects: put WAV/MP3 files in <code>ReelStudio/data/sfx/</code>.</p>
+    <p class="note">Keyframe engine: Qwen-Image-Edit 2509 (up to 3 character images per picture), then Qwen-Image-Edit, then FLUX.1 Kontext; otherwise the picture is drawn from text only. To use your own edit workflow, export it from Comfy Cloud (File → Export (API)) as <code>workflows/edit_api.json</code>.</p>
+  </section>
+
+  <section id="credits">
+    <h2>Credits counter</h2>
+    <ul>
+      <li>The green pill at the top (<b>💳 … credits left</b>) is your live Comfy Cloud balance, read from Comfy's billing API about once a minute and after every job. Click it to refresh. Hover to see the split: plan credits, top-up credits, spent this month, and what this app used.</li>
+      <li>It turns <b>yellow</b> below 600 credits and <b>red</b> below 150.</li>
+      <li>If Comfy does not return a balance for your key, the pill turns grey and shows the app's own estimate of credits used this month. Your exact balance is always on Comfy Cloud under profile menu → <b>Manage plan</b> → Credit history.</li>
+      <li>Before you press <b>Make my reel</b>, the plan shows <b>This reel: about N credits</b> for the chosen length and Turbo settings, and warns you in red if your balance is too low. Estimates start from typical times and learn from your own clips after a few runs.</li>
+      <li>Every clip's log line shows about how many credits it used. Comfy's rate is $1 = 211 credits, and GPU time costs about 0.266 credits per second.</li>
+    </ul>
+  </section>
+
+  <section id="lora">
+    <h2>LoRAs and trigger words</h2>
+    <p>A <b>LoRA</b> is a small add-on file trained on one character (or style). It teaches Wan 2.2 exactly what the character looks like, so the face, hair and outfit stay identical in every clip and every reel. That's the best fix for "the face changes a little".</p>
+    <p>A <b>trigger word</b> is a made-up word (like <code>p4ri</code>) that the LoRA was trained with. Putting it at the start of the prompt switches the LoRA's look on. <b>A trigger word does nothing on its own</b>: the LoRA files must be loaded too. Reel Studio does both for you once the LoRA has files.</p>
+    <table>
+      <tr><th>Dropdown entry</th><th>What it does</th></tr>
+      <tr><td>No character LoRA</td><td>Uses only the start image and description. Fine for most reels.</td></tr>
+      <tr><td>Lightning 4-step (Turbo)</td><td>A speed LoRA built into the workflows, controlled by the <b>Turbo</b> tick box. No trigger word.</td></tr>
+      <tr><td>Pari character LoRA (not trained yet)</td><td>A ready-made entry for Pari with trigger <code>p4ri</code>. Inactive until you add the trained files.</td></tr>
+      <tr><td>Your own LoRAs</td><td>Add them with <b>Manage LoRAs</b>.</td></tr>
+    </table>
+    <h3>Make and use a character LoRA</h3>
+    <ol>
+      <li><b>Make 12–20 training images</b> of the character: different angles (front, three-quarter, side), close-ups and full body, 2–3 outfits, different expressions and backgrounds. Keep the face identical. Add them to the library.</li>
+      <li><b>Write a caption per image</b> starting with the trigger word, e.g. <i>p4ri, close-up, smiling, plain background</i>.</li>
+      <li><b>Train a Wan 2.2 14B LoRA</b>, for example with fal.ai's "Wan 2.2 14B Image Trainer" (upload a ZIP of images + captions, set the trigger, about 1,000 steps), Civitai's trainer, or AI Toolkit on a rented GPU. You get two files: <b>high-noise</b> and <b>low-noise</b>.</li>
+      <li><b>Put the files on Hugging Face</b> (a private repo is fine) or Civitai.</li>
+      <li><b>Import into Comfy Cloud</b> (Creator plan or higher): Models → Import → paste each file's download link → folder <code>loras</code>. For a private repo, first add your Hugging Face token under Comfy Cloud Settings → Secrets.</li>
+      <li><b>In Reel Studio</b>: Manage LoRAs → Edit the entry → type the exact two file names as shown in Comfy Cloud → My Models → Save. Then pick it in the character's LoRA dropdown.</li>
+    </ol>
+    <div class="tip">Strength 0.8–1.0 is usual. Too high can look stiff; too low can let the face drift.</div>
+  </section>
+
+  <section id="reel">
+    <h2>Plan and make a reel</h2>
+    <ol>
+      <li><b>Length</b>: 10–30 s. Every 5 s is one clip, generated separately.</li>
+      <li><b>Setting</b> and <b>Mood</b>: describe the place and the song's feel.</li>
+      <li><b>Turbo</b> (recommended): about 1–2 min per clip. Off: about 10 min per clip, slightly more detail.
+        The chip next to the tick box shows <b>Turbo: ON</b>, <b>Turbo: OFF</b> or <b>Turbo: unavailable</b> (the workflow is missing the switch or the lightx2v LoRAs; hover to see why).
+        Your choice is remembered for the next reel.</li>
+      <li><b>Turbo check:</b> if Turbo is off when you press <b>Make my reel</b>, <b>Resume</b> or <b>Redo from this clip</b>, the app stops and asks first.
+        <b>Enable Turbo and start</b> switches it on for that reel and as your default, then starts. <b>Keep it off</b> starts in slow mode. <b>Cancel</b> starts nothing, so no credits are used.</li>
+      <li><b>Upscale</b>: exports 1080 × 1920 for Instagram.</li>
+      <li><b>Write the clip prompts</b>: read and edit each clip's text.</li>
+      <li><b>Make my reel</b>: watch each clip go <i>Uploading → On Comfy Cloud → Done</i>. Hover a finished clip to preview it.</li>
+    </ol>
+  </section>
+
+  <section id="chain">
+    <h2>How clips are chained</h2>
+    <p>Wan 2.2 makes about 5 seconds at a time. The app joins clips so the motion looks continuous:</p>
+    <ul>
+      <li><b>Chained</b>: a clip starts from the previous clip's last frame. Its duplicate first frame is trimmed when joining.</li>
+      <li><b>End on character image</b>: the clip uses first-and-last-frame mode and must finish on the original picture. It's always on for the last clip, so the character ends looking exactly like herself.</li>
+      <li><b>Restart from character image</b>: the clip starts from the original picture again. Reels of 20 s or more do this every third clip, so the face doesn't slowly drift. The clip before it ends on the same picture, so the cut is invisible.</li>
+    </ul>
+  </section>
+
+  <section id="music">
+    <h2>Music</h2>
+    <table>
+      <tr><th>Option</th><th>When to use it</th></tr>
+      <tr><td>Original dhol track</td><td>Made on your Mac for each reel; no copyright issues.</td></tr>
+      <tr><td>My song file</td><td>Your MP3/M4A/WAV. Set "Start song at" to begin at the hook (for example 45 s), or click <b>Use the liveliest part</b>.</td></tr>
+      <tr><td>No music</td><td>Best for popular film songs: post the silent reel and add the song from Instagram's music library, which is licensed and helps reach.</td></tr>
+    </table>
+  </section>
+
+  <section id="dance">
+    <h2>Dance that follows the music</h2>
+    <p>Pick <b>My song file</b> <i>before</i> pressing <b>Write the clip prompts</b>. The app listens to the song first:</p>
+    <ul>
+      <li><b>Tempo and beats.</b> The song panel shows its BPM. Tick marks on top are the bars (downbeats).</li>
+      <li><b>Energy.</b> Bar colours: grey = calm, gold = medium, red = high. The pink box is the part of the song your reel uses. Click the graph to move it there, or drag the box. <b>◀ bar</b> / <b>bar ▶</b> move it by one bar. <b>Use the liveliest part</b> jumps to the most energetic stretch and plays it straight away.</li>
+      <li><b>Hear the selection.</b> <b>▶ Play selected part</b> plays exactly the part your reel will use, and stops at its end (tick <b>Loop</b> to repeat it). A black line moves across the graph as it plays. Moving the box while it plays restarts from the new start. With <b>Start exactly on a beat</b>, the start snaps to the nearest bar.</li>
+      <li><b>Moves match energy.</b> Calm parts get flowing arms and sways; medium parts get bouncy steps, claps and twists; high parts get jumps, fast spins and big arm throws. Moves never repeat within a reel, and each clip uses a different body part from the one before.</li>
+      <li><b>Lyrics become gestures.</b> Paste the lyrics (one line each; <code>[0:12]</code> times at the start are optional), or press <b>Write the lyrics for me (Whisper)</b>. Words like clap/taali, moon/chand/sky, dil/love/heart, aaja/come, nacho/dance, rain/baarish turn into matching gestures. Each clip card in the plan shows its energy, the lyric line and the gesture chosen. The lyrics themselves are never put in the video prompt.</li>
+      <li><b>Whisper</b> runs on your Mac. The first time, it installs <code>faster-whisper</code> and downloads a model (about 150 MB), which takes a few minutes. Song vocals over loud music are hard to hear, so always check and fix the lines it writes. Choose the language (Hindi, English, …) for better results.</li>
+      <li><b>Dynamic Turbo</b> (on by default): the first 2 of 6 steps run without the speed LoRA, so movements come out bigger and livelier. It adds about 1 minute and a few credits per clip. Untick it for the fastest, cheapest clips.</li>
+      <li><b>Beat sync</b> (on by default): when joining, the app finds the moments where the dance "hits" and speeds each clip up or down by up to 10% so more of those hits land on beats. The log shows the before and after numbers, for example "39% of the dance accents land on a beat (was 28%)".</li>
+    </ul>
+    <p class="note">Tip: you can still type extra wishes in "Mood or song notes" (for example "bhangra style" or "lots of spins"), and edit any prompt before making the reel.</p>
+  </section>
+
+  <section id="fix">
+    <h2>Fix a clip or change the music</h2>
+    <ul>
+      <li><b>Redo from this clip</b>: remakes that clip and every clip after it (later clips depend on its last frame).</li>
+      <li><b>Resume</b>: continues a stopped or failed reel from the first unfinished clip.</li>
+      <li><b>Change the music → Remix music</b>: new music in seconds, no cloud credits used.</li>
+      <li><b>Past reels</b>: open any earlier reel to watch, redo or remix it.</li>
+    </ul>
+  </section>
+
+  <section id="prompts">
+    <h2>Better prompts (Claude / Ollama)</h2>
+    <p>The app writes prompts with the first option available:</p>
+    <ol><li><b>Claude</b>: add an Anthropic API key in Settings (from console.anthropic.com). Best results.</li>
+        <li><b>Ollama</b>: if Ollama is running on your Mac, tick "Use Ollama" and pick a model.</li>
+        <li><b>Built-in</b>: ready-made dance moves; always works offline.</li></ol>
+    <p>You can always edit any prompt before pressing <b>Make my reel</b>.</p>
+  </section>
+
+  <section id="files">
+    <h2>Where files are saved</h2>
+    <pre>ReelStudio/
+  output/      ← finished reels (Name_date.mp4)
+  projects/    ← one folder per reel: clips, frames, music, log
+  data/        ← your characters and their images
+  config.json  ← your settings and keys (private)</pre>
+  </section>
+
+  <section id="trouble">
+    <h2>Troubleshooting</h2>
+    <table>
+      <tr><th>You see</th><th>Do this</th></tr>
+      <tr><td>"Failed to open page"</td><td>The app was still starting. Refresh after a few seconds.</td></tr>
+      <tr><td>pip errors mentioning a mirror like <code>pypi.ngc.nvidia.com</code></td><td>Delete the <code>.venv</code> folder and run <code>./run.sh</code> again; the app uses public PyPI.</td></tr>
+      <tr><td>Comfy Cloud: no API key</td><td>Settings → paste key → Test key → Save.</td></tr>
+      <tr><td>401</td><td>The key is wrong or deleted. Make a new one.</td></tr>
+      <tr><td>402</td><td>Out of credits. Top up on Comfy, then press Resume.</td></tr>
+      <tr><td>429</td><td>Your plan is inactive or you're sending too many jobs.</td></tr>
+      <tr><td>"Comfy rejected the workflow"</td><td>A model in the workflow isn't on your account. Re-export it from Comfy (File → Export (API)) into <code>workflows/</code>.</td></tr>
+      <tr><td>Face changes over a long reel</td><td>Turn on "Restart from character image" for a middle clip, or use a clearer start image.</td></tr>
+      <tr><td>Clip looks soft</td><td>Turn Turbo off and use Redo from this clip.</td></tr>
+    </table>
+    <p>The <b>Activity log</b> under each reel, and the Terminal window, show exactly what happened.</p>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <details><summary>Does Comfy Cloud charge me while the app is open?</summary><p>No. Comfy Cloud charges only while a GPU is working on a job. An open app, or a "connected" light with no jobs, uses no credits.</p></details>
+    <details><summary>Can I close my laptop while a reel is being made?</summary><p>The clip being made keeps running on Comfy Cloud, but the app needs to be running to start the next clip and download results. Keep the Mac awake and plugged in, or press Resume later.</p></details>
+    <details><summary>Why 5-second clips?</summary><p>That's what Wan 2.2 generates well in one pass. Longer reels are chained clips, which also lets you redo just one part.</p></details>
+    <details><summary>Can I make adult or animal characters?</summary><p>Yes. Choose the type when adding the character. The child safety rules apply only to child types.</p></details>
+    <details><summary>Is my data uploaded anywhere?</summary><p>Only the start images and prompts go to Comfy Cloud to make clips, and prompts go to Claude if you set a key. Everything else stays on your Mac.</p></details>
+    <details><summary>Do I need to label the reels as AI?</summary><p>Yes. On Instagram, switch on the AI label under Advanced settings when you post.</p></details>
+  </section>
+</main>
+</div>
+</body>
+</html>

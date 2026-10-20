@@ -1,0 +1,14 @@
+.venv/
+config.json
+projects/
+output/
+Pari_media/
+__pycache__/
+*.pyc
+.DS_Store
+data/songs/
+data/usage.json
+data/gallery_tmp/
+data/sfx_cache/
+data/photo_tmp/
+data/voice_tests/
