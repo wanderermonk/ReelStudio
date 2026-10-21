@@ -42,6 +42,7 @@ You don't need a GPU. The heavy work runs on Comfy Cloud. Your Mac only runs a l
 - [Where your files go](#where-your-files-go)
 - [Comfy Cloud workflows (and how to swap them)](#comfy-cloud-workflows-and-how-to-swap-them)
 - [Local HTTP API](#local-http-api)
+- [MCP server (drive Reel Studio from Claude or Cursor)](#mcp-server-drive-reel-studio-from-claude-or-cursor)
 - [Troubleshooting](#troubleshooting)
 - [Content and safety rules](#content-and-safety-rules)
 - [Posting tips](#posting-tips)
@@ -789,6 +790,45 @@ r=u.Request("'$B'/api/projects",json.dumps({"character_id":"pari","clips":p["cli
 print(json.load(u.urlopen(r))["id"])')
 curl -s -X POST $B/api/projects/$PID/start -H 'Content-Type: application/json' -d '{}'
 ```
+
+---
+
+## MCP server (drive Reel Studio from Claude or Cursor)
+
+`mcp_server.py` lets an AI assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io)
+(Claude Desktop, Claude Code, Cursor, ...) use Reel Studio by chat, for example:
+*"Make a 15-second reel of Pari in a Diwali courtyard with the original music, Turbo on."*
+
+It is a thin layer over the local HTTP API above, so **Reel Studio must be running** (`./run.sh`).
+
+| Tool | What it does | Spends credits? |
+|---|---|---|
+| `reel_studio_status` | keys, writers, Turbo, credit balance | no |
+| `list_characters`, `list_songs`, `list_reels` | what is saved | no |
+| `estimate_cost` | credits, dollars and minutes for a length | no |
+| `plan_reel` | writes the clip prompts only | no |
+| `make_reel` | plans and creates the reel; starts it only with `confirm=true` | only with `confirm=true` |
+| `start_reel` | start, resume or redo from a clip (1-based) | **yes** |
+| `reel_status`, `wait_for_reel` | progress, recent log, final video path | no |
+| `edit_clip` | change one clip's motion prompt | no |
+| `stop_reel`, `set_turbo` | stop now / after this clip; Turbo on or off | no |
+
+**Setup (Claude Desktop):** run `./run.sh` once, then add this to
+`~/Library/Application Support/Claude/claude_desktop_config.json` (use your own folder path) and restart Claude:
+
+```json
+{
+  "mcpServers": {
+    "reel-studio": {
+      "command": "/full/path/to/ReelStudio/run_mcp.sh"
+    }
+  }
+}
+```
+
+`run_mcp.sh` installs the `mcp` package into the app's `.venv` the first time (`requirements-mcp.txt`).
+**Claude Code:** `claude mcp add reel-studio /full/path/to/ReelStudio/run_mcp.sh`.
+If the app runs on another port, set `REELSTUDIO_URL` (default `http://127.0.0.1:7860`).
 
 ---
 
