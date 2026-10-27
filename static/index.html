@@ -210,6 +210,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
       <label class="full">Mood or song notes (helps the dance match)<input id="r-mood" placeholder="happy festive Diwali dance, medium tempo"></label>
       <label>Music<select id="m-mode"><option value="original">Original dhol track (made for you)</option><option value="song">My song file</option><option value="none">No music (add it in Instagram)</option></select></label>
       <label id="m-fileWrap" hidden>Song file (MP3, M4A, WAV)<input type="file" id="m-file" accept="audio/*"></label>
+      <label id="m-urlWrap" class="full">🔗 Song from a link (paste a YouTube, SoundCloud or MP3 link)<span class="row" style="flex-wrap:nowrap"><input type="url" id="m-url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"><button type="button" id="m-urlGo" style="white-space:nowrap">Get song</button></span></label>
       <label id="m-reuseWrap" hidden>Or a song you used before<select id="m-reuse"><option value="">—</option></select></label>
       <label id="m-startWrap" hidden>Start song at (seconds)<input type="number" id="m-start" min="0" step="0.5" value="0"></label>
     </div>
@@ -282,6 +283,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
         <label>Narration<select id="s-lang"><option value="hi">Hindi</option><option value="en" selected>English</option><option value="none">No narration</option></select></label>
         <label>Music<select id="s-music"><option value="original">Soft original music</option><option value="song">A song I added</option><option value="none">No music</option></select></label>
         <label id="s-songWrap" hidden>Song<select id="s-song"></select></label>
+        <label id="s-urlWrap" class="full">🔗 Song from a link (paste a YouTube, SoundCloud or MP3 link)<span class="row" style="flex-wrap:nowrap"><input type="url" id="s-url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"><button type="button" id="s-urlGo" style="white-space:nowrap">Get song</button></span><span class="note" id="s-urlNote" style="text-transform:none;letter-spacing:0;font-weight:400"></span></label>
       </div>
       <p class="warn" id="s-long" hidden>Long story: the shots are written scene by scene (best with a Claude API key or Ollama; the built-in writer reuses simple scenes). A 2-minute story is about 24 clips + 30–40 keyframes: roughly 1,100–1,500 credits and 1–1½ hours of cloud time. You can stop at any point and resume later; finished shots are kept.</p>
       <div style="display:grid;gap:8px"><div class="row between"><span class="lbl">Voices: one per speaker (narrator and each character)</span><label class="opt"><input type="checkbox" id="s-allvoices">Show all voices</label></div><div id="s-voices" class="voices"></div></div>
@@ -349,6 +351,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
             <label>Music<select id="x-mode"><option value="original">Original dhol track</option><option value="song">My song file</option><option value="none">No music</option></select></label>
             <label>Start song at (s)<input type="number" id="x-start" min="0" step="0.5" value="0"></label>
             <label class="full">Song file<input type="file" id="x-file" accept="audio/*"></label>
+            <label class="full">Or a song link (used if no file is chosen)<input type="url" id="x-url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"></label>
           </div>
           <div class="row"><button id="remixBtn">Remix music</button></div>
         </div>
@@ -625,6 +628,22 @@ $("songPrev").onclick=()=>barNudge(-1);$("songNext").onclick=()=>barNudge(1);
 async function uploadSong(file){const fd=new FormData();fd.append("song",file);$("songNote").innerHTML='<span class="spin"></span> Listening for the beat…';$("songBox").hidden=false;
   try{setSong(await api("/api/songs?seconds="+$("r-len").value,{method:"POST",body:fd}),true);loadSongs();}catch(e){showErr(e);$("songNote").textContent="";}}
 $("m-file").onchange=()=>{if($("m-file").files[0])uploadSong($("m-file").files[0]);};
+// Download a song from a link (YouTube, SoundCloud, direct MP3…) into the song list.
+async function songFromUrl(url,seconds,onProgress){url=(url||"").trim();if(!url)throw new Error("Paste a song link first.");
+  const j=await api("/api/songs/from-url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+  const q=seconds?"?seconds="+seconds:"";
+  for(;;){const st=await api(`/api/songs/from-url/${j.job}${q}`);
+    if(st.state==="done"&&st.song)return st.song;
+    if(st.state==="error")throw new Error(st.msg||"Could not get the song.");
+    if(onProgress)onProgress(st.msg+(st.elapsed>5?` (${st.elapsed}s)`:""));
+    await new Promise(r=>setTimeout(r,1000));}}
+
+async function urlSong(){const b=$("m-urlGo");b.disabled=true;
+  if($("m-mode").value!=="song"){$("m-mode").value="song";$("m-mode").onchange();}$("songBox").hidden=false;
+  $("songNote").innerHTML='<span class="spin"></span> Starting…';
+  try{setSong(await songFromUrl($("m-url").value,$("r-len").value,m=>$("songNote").innerHTML='<span class="spin"></span> '+esc(m)),true);loadSongs();$("m-file").value="";}
+  catch(e){showErr(e);$("songNote").textContent="";if(!song)$("songBox").hidden=true;}finally{b.disabled=false;}}
+$("m-urlGo").onclick=urlSong;$("m-url").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();urlSong();}};
 $("m-reuse").onchange=async()=>{if(!$("m-reuse").value)return;setSong(await api(`/api/songs/${$("m-reuse").value}?seconds=${$("r-len").value}`),false);};
 $("m-start").oninput=drawSong;$("r-len").addEventListener("change",drawSong);window.addEventListener("resize",drawSong);
 $("m-start").onchange=()=>setStart(+$("m-start").value);
@@ -707,7 +726,10 @@ $("resumeBtn").onclick=async()=>{const p=await api("/api/projects/"+cur);const i
   try{await startReel(cur,{from_clip:Math.max(0,i)});$("err").hidden=true;watch(cur);}catch(e){showErr(e)}};
 $("revealBtn").onclick=()=>post(`/api/projects/${cur}/reveal`);
 $("remixBtn").onclick=async()=>{try{const mode=$("x-mode").value;
-  if(mode==="song"){if(!$("x-file").files[0])throw new Error("Choose a song file.");const fd=new FormData();fd.append("song",$("x-file").files[0]);
+  if(mode==="song"){const fd=new FormData();
+    if($("x-file").files[0])fd.append("song",$("x-file").files[0]);
+    else if($("x-url").value.trim()){$("remixBtn").textContent="Downloading song…";try{fd.append("song_id",(await songFromUrl($("x-url").value,0,m=>$("remixBtn").textContent=m.slice(0,60))).id);}finally{$("remixBtn").textContent="Remix music";}}
+    else throw new Error("Choose a song file or paste a song link.");
     await api(`/api/projects/${cur}/song`,{method:"POST",body:fd});}
   await post(`/api/projects/${cur}/music`,{mode,start:+$("x-start").value||0});await post(`/api/projects/${cur}/remix`);watch(cur);}catch(e){showErr(e)}};
 

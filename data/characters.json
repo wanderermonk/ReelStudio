@@ -116,5 +116,17 @@
     "lora_id": "none",
     "image": "fee6b7bf.png",
     "library_id": "1adcb2fb"
+  },
+  {
+    "id": "90034ec6",
+    "name": "Zoya",
+    "kind": "girl-child",
+    "age": "",
+    "style": "3D animated cartoon",
+    "look": "a 5-year-old girl with curly black hair and big brown eyes",
+    "outfit": "a pink frock with white polka dots and pink sneakers",
+    "lora_id": "none",
+    "image": "90034ec6.jpg",
+    "library_id": "f8702544"
   }
 ]

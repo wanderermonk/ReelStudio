@@ -11,7 +11,15 @@ import uuid
 
 from flask import Flask, abort, jsonify, request, send_from_directory
 
-from reelstudio import audio, credits, gallery, library, lyrics, photochar, pipeline, planner, sfx, story, story_pipeline, tts
+# Some home networks advertise IPv6 that stalls: browsers quietly fall back to IPv4, but Python waits forever
+# (Comfy Cloud uploads, credits and song downloads hang). Use IPv4 for all of the app's internet calls.
+# Set REELSTUDIO_IPV6=1 before ./run.sh to turn this off.
+if os.environ.get("REELSTUDIO_IPV6") != "1":
+    import socket as _socket
+    import urllib3.util.connection as _u3conn
+    _u3conn.allowed_gai_family = lambda: _socket.AF_INET
+
+from reelstudio import audio, credits, gallery, library, lyrics, photochar, pipeline, planner, sfx, songurl, story, story_pipeline, tts
 from reelstudio.comfy import ComfyCloud, ComfyError
 from reelstudio.pipeline import Project
 
@@ -459,27 +467,102 @@ def add_song():
     f = request.files.get("song")
     if not f:
         return jsonify({"error": "Choose a song file."}), 400
-    data = f.read()
+    return _store_song(f.read(), f.filename)
+
+
+def _save_song(data, filename, source_url=None):
+    """Store a song in the song list and analyse it. Returns its meta (raises on bad audio)."""
     import hashlib
     sid = hashlib.sha1(data).hexdigest()[:12]
     d = os.path.join(SONG_DIR, sid)
     os.makedirs(d, exist_ok=True)
-    ext = os.path.splitext(f.filename or "")[1].lower() or ".mp3"
+    ext = os.path.splitext(filename or "")[1].lower() or ".mp3"
     m = song_meta(sid)
     if not m:
         with open(os.path.join(d, "song" + ext), "wb") as fh:
             fh.write(data)
-        m = {"id": sid, "name": f.filename or "song", "file": "song" + ext, "lyrics": [], "lyrics_text": "",
+        m = {"id": sid, "name": filename or "song", "file": "song" + ext, "lyrics": [], "lyrics_text": "",
              "added": time.time()}
+        if source_url:
+            m["source_url"] = source_url
         save_song_meta(m)
         m = song_meta(sid)
-    try:
-        a = audio.analyze_cached(m["path"])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    a = audio.analyze_cached(m["path"])
     m.update(bpm=a["bpm"], duration=a["duration"])
     save_song_meta(m)
+    return m
+
+
+def _store_song(data, filename, source_url=None):
+    try:
+        m = _save_song(data, filename, source_url)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
     return jsonify(song_view(m, request.args.get("seconds", type=float)))
+
+
+SONG_JOBS = {}  # job id -> {"state": "running|done|error", "msg": "...", "song_id": ...}
+
+
+@app.post("/api/songs/from-url")
+def add_song_from_url():
+    """Start downloading a song from a link (YouTube, SoundCloud, a direct MP3 link…). Poll the job for progress."""
+    url = ((request.get_json(silent=True) or {}).get("url") or request.form.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "Paste a song link first."}), 400
+    if not re.match(r"^https?://", url, re.I):
+        return jsonify({"error": "Paste a full link that starts with http:// or https://"}), 400
+    for sid in os.listdir(SONG_DIR):  # already downloaded this link? reuse it
+        m = song_meta(sid)
+        if m and m.get("source_url") == url:
+            jid = uuid.uuid4().hex[:10]
+            SONG_JOBS[jid] = {"state": "done", "msg": "Already in your songs.", "song_id": sid, "started": time.time()}
+            return jsonify({"job": jid, "state": "done"})
+    for jid, j in list(SONG_JOBS.items()):  # same link already downloading? follow that job
+        if j.get("url") == url and j["state"] == "running":
+            return jsonify({"job": jid, "state": "running", "msg": j["msg"]})
+    jid = uuid.uuid4().hex[:10]
+    st = SONG_JOBS[jid] = {"state": "running", "msg": "Starting…", "url": url, "started": time.time()}
+
+    def work():
+        try:
+            data, name = songurl.fetch(url, log=lambda x: st.update(msg=x))
+            st.update(msg="Listening for the beat…")
+            m = _save_song(data, name, source_url=url)
+            st.update(state="done", msg="Song added.", song_id=m["id"])
+        except Exception as e:
+            st.update(state="error", msg=str(e))
+
+    threading.Thread(target=work, daemon=True).start()
+    return jsonify({"job": jid, "state": "running", "msg": st["msg"]})
+
+
+@app.get("/api/debug/threads")
+def debug_threads():
+    """What every background task is doing right now (for troubleshooting a stuck download)."""
+    import sys
+    import traceback
+    names = {t.ident: t.name for t in threading.enumerate()}
+    out = []
+    for ident, frame in sys._current_frames().items():
+        stack = "".join(traceback.format_stack(frame)[-8:])
+        if "songurl" in stack or "add_song_from_url" in stack or "work" in stack:
+            out.append(f"--- {names.get(ident, ident)}\n{stack}")
+    jobs = {k: {x: v for x, v in j.items() if x != "url"} for k, j in SONG_JOBS.items()}
+    return app.response_class(json.dumps(jobs, indent=1) + "\n\n" + ("\n".join(out) or "no download threads"),
+                              mimetype="text/plain")
+
+
+@app.get("/api/songs/from-url/<jid>")
+def song_url_job(jid):
+    st = SONG_JOBS.get(jid) or abort(404)
+    out = {k: v for k, v in st.items() if k not in ("url", "started")}
+    out["elapsed"] = round(time.time() - st.get("started", time.time()))
+    if st["state"] == "done":
+        m = song_meta(st["song_id"])
+        if m:
+            out["song"] = song_view(m, request.args.get("seconds", type=float))
+    return jsonify(out)
 
 
 @app.get("/api/songs/<sid>")
@@ -1076,12 +1159,19 @@ def get_project(pid):
 def upload_song(pid):
     p = _proj(pid)
     f = request.files.get("song")
-    if not f:
+    sm = song_meta(request.form.get("song_id")) if not f else None
+    if not f and not sm:
         abort(400)
-    name = "song" + (os.path.splitext(f.filename)[1].lower() or ".mp3")
-    f.save(p.file(name))
+    if f:
+        name = "song" + (os.path.splitext(f.filename)[1].lower() or ".mp3")
+        f.save(p.file(name))
+        orig = f.filename
+    else:  # a song from the song list (uploaded before or downloaded from a link)
+        name = "song" + (os.path.splitext(sm["file"])[1].lower() or ".mp3")
+        shutil.copyfile(sm["path"], p.file(name))
+        orig = sm["name"]
     m = p.data.setdefault("music", {})
-    m.update(mode="song", file=name, original_name=f.filename)
+    m.update(mode="song", file=name, original_name=orig)
     p.save()
     return jsonify(p.data)
 

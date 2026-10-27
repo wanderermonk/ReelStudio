@@ -58,7 +58,7 @@
     refreshVoiceCast();
     try {
       const songs = await api("/api/songs");
-      const o = songs.map(s => `<option value="${s.id}">${esc(s.name)} · ${Math.round(s.bpm || 0)} BPM</option>`).join("") || `<option value="">(add a song in Dance reel → My song file)</option>`;
+      const o = songs.map(s => `<option value="${s.id}">${esc(s.name)} · ${Math.round(s.bpm || 0)} BPM</option>`).join("") || `<option value="">(no songs yet: paste a link below)</option>`;
       $("s-song").innerHTML = o;
     } catch (e) {}
   }
@@ -137,7 +137,21 @@
   $("s-lang").onchange = () => { voiceCast = {}; refreshVoiceCast(); };
   $("s-shots").onchange = () => { const n = +$("s-shots").value; $("s-long").hidden = n < 12; };
   $("sb-compact").onchange = () => $("sb-shots").classList.toggle("compact", $("sb-compact").checked);
-  $("s-music").onchange = () => { $("s-songWrap").hidden = $("s-music").value !== "song"; };
+  $("s-music").onchange = () => { const on = $("s-music").value === "song"; $("s-songWrap").hidden = !on; };
+  async function storyUrlSong() {
+    const b = $("s-urlGo"); b.disabled = true;
+    $("s-urlNote").innerHTML = '<span class="spin"></span> Starting…';
+    try {
+      const v = await window.songFromUrl($("s-url").value, 0, m => { $("s-urlNote").innerHTML = '<span class="spin"></span> ' + esc(m); });
+      await loadOpts(); $("s-song").value = v.id;
+      $("s-music").value = "song"; $("s-songWrap").hidden = false;
+      if (window.loadSongs) window.loadSongs();
+      $("s-urlNote").textContent = `Added “${v.name}” · ${Math.round(v.bpm || 0)} BPM. It is now picked above.`;
+    } catch (e) { $("s-urlNote").textContent = e.message || String(e); }
+    finally { b.disabled = false; }
+  }
+  $("s-urlGo").onclick = storyUrlSong;
+  $("s-url").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); storyUrlSong(); } };
   $("s-turbo").onchange = () => { $("s-dyn").disabled = !$("s-turbo").checked; updEst(); };
   $("s-dyn").onchange = updEst;
 
