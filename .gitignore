@@ -12,3 +12,5 @@ data/gallery_tmp/
 data/sfx_cache/
 data/photo_tmp/
 data/voice_tests/
+# macOS metadata on external drives
+._*
